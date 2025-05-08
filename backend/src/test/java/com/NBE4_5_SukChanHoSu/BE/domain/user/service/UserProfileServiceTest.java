@@ -27,6 +27,9 @@ import static org.mockito.Mockito.*;
 class UserProfileServiceTest {
 
     @Mock
+    private User user;
+
+    @Mock
     private UserProfileRepository userProfileRepository;
 
     @Mock
@@ -254,5 +257,60 @@ class UserProfileServiceTest {
         assertThat(result.getNickname()).isEqualTo("nickname");
         assertThat(result.getIntroduce()).isEqualTo("소개입니다.");
         assertThat(result.getEmail()).isEqualTo("test@example.com"); // 이메일 검증 추가
+    }
+    @Test
+    void profileResponse_생성시_email이_정상적으로_매핑되어야_한다() {
+        // Given
+        Long userId = 1L;
+        String nickname = "testNickname";
+        String email = "test@example.com";
+        Gender gender = Gender.Male;
+        String profileImage = "test.jpg";
+        double latitude = 37.0;
+        double longitude = 127.0;
+        LocalDate birthdate = LocalDate.of(2000, 1, 1);
+        int searchRadius = 20;
+        String lifeMovie = "testMovie";
+        List<Genre> favoriteGenres = List.of(Genre.ACTION);
+        List<String> watchedMovies = List.of("영화1");
+        List<String> preferredTheaters = List.of("극장1");
+        String introduce = "testIntroduce";
+
+        UserProfile userProfile = UserProfile.builder()
+                .userId(userId)
+                .nickName(nickname)
+                .gender(gender)
+                .profileImage(profileImage)
+                .latitude(latitude)
+                .longitude(longitude)
+                .birthdate(birthdate)
+                .searchRadius(searchRadius)
+                .lifeMovie(lifeMovie)
+                .favoriteGenres(favoriteGenres) // 또는 실제 Genre 리스트
+                .watchedMovies(watchedMovies)
+                .preferredTheaters(preferredTheaters)
+                .introduce(introduce)
+                .user(user) // Mock User 객체 연결
+                .build();
+
+        when(user.getEmail()).thenReturn(email); // Mock User 객체의 getEmail() 동작 정의
+
+        // When
+        ProfileResponse profileResponse = new ProfileResponse(userProfile);
+
+        // Then
+        assertThat(profileResponse.getNickname()).isEqualTo(nickname);
+        assertThat(profileResponse.getEmail()).isEqualTo(email);
+        assertThat(profileResponse.getGender()).isEqualTo(gender);
+        assertThat(profileResponse.getProfileImage()).isEqualTo(profileImage);
+        assertThat(profileResponse.getLatitude()).isEqualTo(latitude);
+        assertThat(profileResponse.getLongitude()).isEqualTo(longitude);
+        assertThat(profileResponse.getBirthdate()).isEqualTo(birthdate);
+        assertThat(profileResponse.getSearchRadius()).isEqualTo(searchRadius);
+        assertThat(profileResponse.getLifeMovie()).isEqualTo(lifeMovie);
+        assertThat(profileResponse.getFavoriteGenres()).isEqualTo(List.of("ACTION")); // Enum -> String 변환 확인
+        assertThat(profileResponse.getWatchedMovies()).isEqualTo(watchedMovies);
+        assertThat(profileResponse.getPreferredTheaters()).isEqualTo(preferredTheaters);
+        assertThat(profileResponse.getIntroduce()).isEqualTo(introduce);
     }
 }
