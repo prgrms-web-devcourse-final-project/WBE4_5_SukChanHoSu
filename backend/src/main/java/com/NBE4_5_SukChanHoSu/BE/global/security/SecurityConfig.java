@@ -34,7 +34,14 @@ public class SecurityConfig {
                 .authorizeHttpRequests((authorizeHttpRequests) ->
                         authorizeHttpRequests
                                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                                .requestMatchers("/oauth2/**", "/api/auth/login", "/api/auth/join", "/api/auth/google/url", "/api/email/**").permitAll()
+                                .requestMatchers(HttpMethod.GET, "/api/movie/review/**").permitAll()
+                                .requestMatchers(
+                                        "/oauth2/**",
+                                        "/api/auth/login",
+                                        "/api/auth/join",
+                                        "/api/auth/google/url",
+                                        "/api/email/**"
+                                ).permitAll()
                                 // Swagger
                                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
                                 // Actuator
