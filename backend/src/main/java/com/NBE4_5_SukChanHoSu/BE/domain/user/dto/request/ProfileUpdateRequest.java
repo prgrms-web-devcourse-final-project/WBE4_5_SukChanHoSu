@@ -17,7 +17,6 @@ public class ProfileUpdateRequest {
 
     private String nickname;
     private Gender gender;
-    private String profileImage;
     private Double latitude;
     private Double longitude;
     private LocalDate birthdate;

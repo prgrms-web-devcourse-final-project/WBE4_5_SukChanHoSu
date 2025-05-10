@@ -52,6 +52,18 @@ spring:
               - email
             redirect-uri: https://api.app.mm.ts0608.life/login/oauth2/code/google
 
+  cloud: # AWS 클라우드 설정
+    aws:
+      s3:
+        bucket: team06-moviematch-bucket # S3 버킷 이름 설정
+      credentials:
+        access-key: ${AWS.ACCESS_KEY}  # 환경 변수로 AWS 접근 키 설정
+        secret-key: ${AWS.SECRET_KEY}  # 환경 변수로 AWS 비밀 키 설정
+      region:
+        static: ap-northeast-2  # AWS 리전 설정 (서울 리전)
+      stack:
+        auto: false  # 자동 스택 생성 여부 설정
+
 jwt:
   secret: ${JWT.SECRET}
   expiration:

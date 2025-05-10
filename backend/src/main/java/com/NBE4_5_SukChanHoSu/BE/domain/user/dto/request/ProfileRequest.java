@@ -19,7 +19,7 @@ public class ProfileRequest {
     private String nickname;
     private String email;
     private Gender gender;
-    private String profileImage;
+//    private String profileImage;
     private Double latitude;
     private Double longitude;
     private LocalDate birthdate;

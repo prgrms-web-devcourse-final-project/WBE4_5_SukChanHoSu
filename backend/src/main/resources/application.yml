@@ -37,3 +37,15 @@ custom:
 
   genFile:
     dirPath: c:/temp/glog_dev  # ✅ 파일 저장 경로 (리눅스면 /tmp 등으로 변경 가능)
+
+cloud: # AWS 클라우드 설정
+  aws:
+    s3:
+      bucket: team06-moviematch-bucket # S3 버킷 이름 설정
+    credentials:
+      access-key: ${AWS.ACCESS_KEY}  # 환경 변수로 AWS 접근 키 설정
+      secret-key: ${AWS.SECRET_KEY}
+    region:
+      static: ap-northeast-2  # AWS 리전 설정 (서울 리전)
+    stack:
+      auto: false  # 자동 스택 생성 여부 설정
