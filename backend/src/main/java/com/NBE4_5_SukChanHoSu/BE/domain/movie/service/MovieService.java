@@ -6,17 +6,17 @@ import com.NBE4_5_SukChanHoSu.BE.domain.movie.dto.WeeklyBoxOfficeResult;
 import com.NBE4_5_SukChanHoSu.BE.domain.movie.entity.MovieGenre;
 import com.NBE4_5_SukChanHoSu.BE.global.exception.NullResponseException;
 import com.NBE4_5_SukChanHoSu.BE.global.exception.movie.ParsingException;
-import com.NBE4_5_SukChanHoSu.BE.global.exception.movie.ResponseNotFound;
+import com.NBE4_5_SukChanHoSu.BE.global.exception.redis.RedisSerializationException;
 import com.NBE4_5_SukChanHoSu.BE.global.redis.config.RedisTTL;
+import com.NBE4_5_SukChanHoSu.BE.global.restClient.ApiClient;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestClient;
-import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.List;
@@ -44,21 +44,20 @@ public class MovieService {
     @Value("${movie.api.tmdb-search-url}")
     private String tmdbSearchUrl; // TMDB 영화 검색 API URL
 
-
-    @Autowired
-    private RedisTemplate<String,Object> redisTemplate;
+    private final RedisTemplate<String,Object> redisTemplate;
     private final RedisTTL ttl;
-
     private final RestClient restClient;  // // redisTemplate -> webClient -> RestClient 로 외부 수집 프로토콜 변경
     private final ObjectMapper objectMapper;
-    private static final String BOXOFFICE_KEY = "weeklyBoxOffice";
+    private final ApiClient apiClient;
+
+    private static final String BOX_OFFICE_KEY = "weeklyBoxOffice";
     private static final String MOVIE_KEY = "MovieCd:";
     // 주간 박스오피스
     public List<MovieRankingResponse> searchWeeklyBoxOffice(String targetDt, String weekGb, String itemPerPage) {
         // 캐시 먼저 확인
-        if(redisTemplate.hasKey(BOXOFFICE_KEY)){
+        if(redisTemplate.hasKey(BOX_OFFICE_KEY)){
             // 캐싱된 데이터 반환
-            return (List<MovieRankingResponse>) redisTemplate.opsForValue().get(BOXOFFICE_KEY);
+            return (List<MovieRankingResponse>) redisTemplate.opsForValue().get(BOX_OFFICE_KEY);
         }
 
         // 요청 URL 생성
@@ -72,22 +71,168 @@ public class MovieService {
         String requestUrl = builder.toUriString();
 
         // 응답 JSON으로 받아오기
-        String jsonResponse;
+        String jsonResponse = apiClient.getResponse(requestUrl);
+
+        // JSON 파싱/데이터 처리
+        return extractBoxOffice(jsonResponse);
+    }
+
+    // 영화 상세 페이지
+    public MovieResponse getMovieDetail(String movieCd) {
+        String key = MOVIE_KEY + movieCd;
+        // 캐싱 데이터 먼저 확인
+        MovieResponse cachedData = getCahedData(key);
+        if(cachedData != null){
+            return cachedData;
+        }
+
+        // 요청 URL 생성
+        UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(detailUrl)
+                .queryParam("key", kobisApiKey)
+                .queryParam("movieCd", movieCd);
+
+        String requestUrl = builder.toUriString();
+
+        // API 요청 및 응답 받기
+        String jsonResponse = apiClient.getResponse(requestUrl);
+
+        // JSON 파싱 및 정보 추출
+        MovieResponse response = extractMovieDetail(jsonResponse);
+
+        // 캐싱
+        saveToRedis(response,key);
+
+        return response;
+    }
+
+    // TMDB에서 영화 상세 정보 가져오기
+    private Map<String, Object> getTmdbMovieInfo(String movieNm) {
+        // 요청 URL 생성
+        UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(tmdbSearchUrl)
+                .queryParam("api_key", tmdbApiKey)
+                .queryParam("query", movieNm);
+
+        String requestUrl = builder.toUriString();
+
+        // API 요청 및 응답 받기
+        String jsonResponse = apiClient.getResponse(requestUrl);
+
+        // JSON 파싱 및 상세 정보 추출
+        return extractTmdbMovieInfo(jsonResponse);
+    }
+
+    // TMDB 영화 정보 파싱
+    public Map<String,Object> extractTmdbMovieInfo(String jsonResponse) {
         try {
-            jsonResponse = restClient.get() // get 요청
-                    .uri(requestUrl)    // URL 설정
+            Map<String, Object> responseMap = objectMapper.readValue(jsonResponse, new TypeReference<Map<String, Object>>() {});
+            List<Map<String, Object>> results = (List<Map<String, Object>>) responseMap.get("results");
+            if (results == null || results.isEmpty()) {
+                return null;
+            }
+
+            // 첫 번째 결과의 ID를 사용하여 상세 정보 조회
+            Map<String, Object> first = results.getFirst();
+            String movieId = first.get("id").toString();
+
+            // 디테일 URL 생성
+            String detailUrl = "https://api.themoviedb.org/3/movie/" + movieId + "?api_key=" + tmdbApiKey;
+            // 응답 생성
+            String detailResponse = restClient.get() // get 요청
+                    .uri(detailUrl)    // URL 설정
                     .retrieve()     // 응답
                     .body(String.class);    // String 변환
 
-            // 응답이 비어있는 경우
-            if (jsonResponse == null || jsonResponse.isEmpty()) {
-                throw new ResponseNotFound("404","KOBIS 응답 요청이 비어있습니다.");
-            }
+            // 상세 정보 반환
+            return objectMapper.readValue(detailResponse, new TypeReference<Map<String, Object>>() {});
         } catch (Exception e) {
-            throw new NullResponseException("404","응답이 비어있습니다.");
+            throw new ParsingException("400","API 응답 파싱 실패");
+        }
+    }
+
+    // 포스터 가져오기
+    private String getMoviePoster(String movieNm) {
+        // 요청 URL 생성
+        UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(tmdbSearchUrl)
+                .queryParam("api_key", tmdbApiKey)
+                .queryParam("query", movieNm);
+
+        String requestUrl = builder.toUriString();
+
+        // API 요청 및 응답
+        String jsonResponse = apiClient.getResponse(requestUrl);
+
+        return getPostUrl(jsonResponse);
+    }
+
+    // JSON 파싱 및 포스터 URL 추출
+    private String getPostUrl(String jsonResponse) {
+        try {
+            Map<String, Object> responseMap = objectMapper.readValue(jsonResponse, new TypeReference<Map<String, Object>>() {});
+            List<Map<String, Object>> results = (List<Map<String, Object>>) responseMap.get("results");
+            if (results == null || results.isEmpty()) {
+                return "포스터 정보 없음";
+            }
+
+            Map<String, Object> first = results.getFirst();
+
+            // 포스터 URL 추출
+            String posterPath = (String) first.get("poster_path");
+            // 포스터 URL 생성
+            return "https://image.tmdb.org/t/p/w500" + posterPath;
+        } catch (Exception e) {
+            throw new ParsingException("400","API 응답 파싱 실패");
         }
 
-        // JSON 파싱/데이터 처리
+    }
+
+    // 보고싶은 영화 등록
+    @Transactional
+    public String bookmarkMovie(long profileId, String movieCd) {
+        String key = "user:" + profileId;   // Redis에 저장된 key(like 전송시 생성)
+        redisTemplate.opsForValue().set(key,movieCd,ttl.getData(),TimeUnit.SECONDS);    // 1주일 저장
+        return getBookmarkDataFromRedis(key);
+    }
+
+    // 레디스에 저장된 데이터
+    public String getBookmarkDataFromRedis(String key) {
+        if(redisTemplate.hasKey(key)){
+            return Optional.ofNullable((String)redisTemplate.opsForValue().get(key))
+                    .orElseThrow(() -> new NullResponseException("404","데이터가 비어있습니다."));
+        }
+        throw new RedisSerializationException("500","레디스 키 저장 실패");
+    }
+
+    // 레디스에 저장
+    private void saveToRedis(MovieResponse response, String key) {
+        try{
+            // MovieResponse -> Json 문자열로 직렬화하여 저장
+            String json = objectMapper.writeValueAsString(response);
+            redisTemplate.opsForValue().set(key, json,ttl.getDetail(),TimeUnit.SECONDS);    // 1주일
+        } catch (ParsingException e) {
+            throw new ParsingException("400","캐시 데이터 직렬화 실패");
+        } catch (Exception e) {
+            throw new ParsingException("400","API 응답 파싱 실패");
+        }
+    }
+
+    // 캐싱 데이터 가져오기
+    public MovieResponse getCahedData(String key) {
+        if(redisTemplate.hasKey(key)){
+            String cachedData =(String) redisTemplate.opsForValue().get(key);
+            if(cachedData != null){
+                try{
+                    // 직렬화
+                    return objectMapper.readValue(cachedData, MovieResponse.class);
+                }catch (Exception e){
+                    throw new ParsingException("400","캐시 데이터 역직렬화 실패");
+                }
+            }
+        }
+        return null;
+    }
+
+    // 박스오피스 데이터 파싱
+    private List<MovieRankingResponse> extractBoxOffice(String jsonResponse) {
         try {
             // Json -> WeeklyBoxOfficeResult 로 파싱
             WeeklyBoxOfficeResult result = objectMapper.readValue(jsonResponse, WeeklyBoxOfficeResult.class);
@@ -116,52 +261,16 @@ public class MovieService {
                     })
                     .collect(Collectors.toList());
             // 캐싱
-            redisTemplate.opsForValue().set(BOXOFFICE_KEY, responses, ttl.getRank(), TimeUnit.SECONDS); // TTL 설정
+            redisTemplate.opsForValue().set(BOX_OFFICE_KEY, responses, ttl.getRank(), TimeUnit.SECONDS); // TTL 설정
             return responses;
         } catch (Exception e) {
             throw new ParsingException("400","API 응답 파싱 실패");
         }
     }
 
-    // 영화 상세 페이지
-    public MovieResponse getMovieDetail(String movieCd) {
-        String key = MOVIE_KEY + movieCd;
-        // 캐싱 데이터 먼저 확인
-        if(redisTemplate.hasKey(key)){
-            String cachedData =(String) redisTemplate.opsForValue().get(key);
-            if(cachedData != null){
-                try{
-                    // 직렬화
-                    return objectMapper.readValue(cachedData, MovieResponse.class);
-                }catch (Exception e){
-                    throw new ParsingException("400","캐시 데이터 역직렬화 실패");
-                }
-            }
-        }
-        // 요청 URL 생성
-        UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(detailUrl)
-                .queryParam("key", kobisApiKey)
-                .queryParam("movieCd", movieCd);
-
-        String requestUrl = builder.toUriString();
-
-        // API 요청 및 응답 받기
-        String jsonResponse;
-        try {
-            jsonResponse = restClient.get() // get 요청
-                    .uri(requestUrl)    // URL 설정
-                    .retrieve()     // 응답
-                    .body(String.class);    // String 변환
-
-            if (jsonResponse == null || jsonResponse.isEmpty()) {
-                throw new ResponseNotFound("404","KOBIS 응답 요청이 비어있습니다.");
-            }
-        } catch (Exception e) {
-            throw new ResponseNotFound("404","KOBIS 응답 요청을 가져올 수 없습니다.");
-        }
-
-        // JSON 파싱 및 정보 추출
-        try {
+    // 영화 상세정보 파싱
+    private MovieResponse extractMovieDetail(String jsonResponse) {
+        try{
             Map<String, Object> responseMap = objectMapper.readValue(jsonResponse, new TypeReference<Map<String, Object>>() {});
 
             // 결과 저장
@@ -234,7 +343,7 @@ public class MovieService {
             }
 
             // MovieResponse 객체 생성 및 반환
-            MovieResponse response = new MovieResponse(
+            return new MovieResponse(
                     movieNm, // 영화명
                     openDt, // 개봉일
                     showTm, // 상영 시간
@@ -245,110 +354,6 @@ public class MovieService {
                     posterUrl, // 포스터 URL
                     overview // 줄거리 (TMDB)
             );
-
-            try{
-                // MovieResponse -> Json 문자열로 직렬화하여 저장
-                String json = objectMapper.writeValueAsString(response);
-                redisTemplate.opsForValue().set(key, json,ttl.getDetail(),TimeUnit.SECONDS);    // 1주일
-            } catch (ParsingException e) {
-                throw new ParsingException("400","캐시 데이터 직렬화 실패");
-            }
-
-            return response;
-        } catch (Exception e) {
-            throw new ParsingException("400","API 응답 파싱 실패");
-        }
-    }
-
-    // TMDB에서 영화 상세 정보 가져오기
-    private Map<String, Object> getTmdbMovieInfo(String movieNm) {
-        // 요청 URL 생성
-        UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(tmdbSearchUrl)
-                .queryParam("api_key", tmdbApiKey)
-                .queryParam("query", movieNm);
-
-        String requestUrl = builder.toUriString();
-
-        // API 요청 및 응답 받기
-        String jsonResponse;
-        try {
-            jsonResponse = restClient.get() // get 요청
-                    .uri(requestUrl)    // URL 설정
-                    .retrieve()     // 응답
-                    .body(String.class);    // String 변환
-
-            if (jsonResponse == null || jsonResponse.isEmpty()) {
-                throw new ResponseNotFound("404","TMDB 응답 요청이 비어있습니다.");
-            }
-        } catch (Exception e) {
-            return null;
-        }
-
-        // JSON 파싱 및 상세 정보 추출
-        try {
-            Map<String, Object> responseMap = objectMapper.readValue(jsonResponse, new TypeReference<Map<String, Object>>() {});
-            List<Map<String, Object>> results = (List<Map<String, Object>>) responseMap.get("results");
-            if (results == null || results.isEmpty()) {
-                return null;
-            }
-
-            // 첫 번째 결과의 ID를 사용하여 상세 정보 조회
-            Map<String, Object> first = results.getFirst();
-            String movieId = first.get("id").toString();
-
-            // 디테일 URL 생성
-            String detailUrl = "https://api.themoviedb.org/3/movie/" + movieId + "?api_key=" + tmdbApiKey;
-            // 응답 생성
-            String detailResponse = restClient.get() // get 요청
-                    .uri(detailUrl)    // URL 설정
-                    .retrieve()     // 응답
-                    .body(String.class);    // String 변환
-
-            // 상세 정보 반환
-            return objectMapper.readValue(detailResponse, new TypeReference<Map<String, Object>>() {});
-        } catch (Exception e) {
-            throw new ParsingException("400","API 응답 파싱 실패");
-        }
-    }
-
-    // 포스터 가져오기
-    private String getMoviePoster(String movieNm) {
-        // 요청 URL 생성
-        UriComponentsBuilder builder = UriComponentsBuilder.fromUriString(tmdbSearchUrl)
-                .queryParam("api_key", tmdbApiKey)
-                .queryParam("query", movieNm);
-
-        String requestUrl = builder.toUriString();
-
-        // API 요청 및 응답
-        String jsonResponse;
-        try {
-            jsonResponse = restClient.get() // get 요청
-                    .uri(requestUrl)    // URL 설정
-                    .retrieve()     // 응답
-                    .body(String.class);    // String 변환
-
-            if (jsonResponse == null || jsonResponse.isEmpty()) {
-                throw new ResponseNotFound("404","TMDB 응답 요청이 비어있습니다.");
-            }
-        } catch (Exception e) {
-            return "포스터 정보 없음";
-        }
-
-        // JSON 파싱 및 포스터 URL 추출
-        try {
-            Map<String, Object> responseMap = objectMapper.readValue(jsonResponse, new TypeReference<Map<String, Object>>() {});
-            List<Map<String, Object>> results = (List<Map<String, Object>>) responseMap.get("results");
-            if (results == null || results.isEmpty()) {
-                return "포스터 정보 없음";
-            }
-
-            Map<String, Object> first = results.getFirst();
-
-            // 포스터 URL 추출
-            String posterPath = (String) first.get("poster_path");
-            // 포스터 URL 생성
-            return "https://image.tmdb.org/t/p/w500" + posterPath;
         } catch (Exception e) {
             throw new ParsingException("400","API 응답 파싱 실패");
         }

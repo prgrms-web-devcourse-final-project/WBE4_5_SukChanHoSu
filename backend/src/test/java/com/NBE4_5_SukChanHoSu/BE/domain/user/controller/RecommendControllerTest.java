@@ -3,24 +3,22 @@ package com.NBE4_5_SukChanHoSu.BE.domain.user.controller;
 import com.NBE4_5_SukChanHoSu.BE.domain.user.dto.request.UserLoginRequest;
 import com.NBE4_5_SukChanHoSu.BE.domain.user.dto.response.LoginResponse;
 import com.NBE4_5_SukChanHoSu.BE.domain.user.entity.UserProfile;
-import com.NBE4_5_SukChanHoSu.BE.domain.user.repository.UserRepository;
-import com.NBE4_5_SukChanHoSu.BE.domain.user.service.UserMatchingService;
-import com.NBE4_5_SukChanHoSu.BE.domain.user.service.UserProfileService;
+import com.NBE4_5_SukChanHoSu.BE.domain.recommend.service.RecommendService;
 import com.NBE4_5_SukChanHoSu.BE.domain.user.service.UserService;
 import com.NBE4_5_SukChanHoSu.BE.global.config.BaseTestConfig;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.json.JSONObject;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.TestInstance;
+import org.junit.jupiter.api.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
+
+import java.util.Set;
 
 import static org.hamcrest.Matchers.containsString;
 import static org.junit.jupiter.api.Assertions.*;
@@ -34,7 +32,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @AutoConfigureMockMvc
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @BaseTestConfig
-class UserMatchingControllerTest {
+class RecommendControllerTest {
 
     @Autowired
     private MockMvc mvc;
@@ -43,10 +41,13 @@ class UserMatchingControllerTest {
     private UserService userService;
 
     @Autowired
-    private UserMatchingService matchingService;
+    private RecommendService matchingService;
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private RedisTemplate<String, Object> redisTemplate;
 
     private String jwtToken;
 
@@ -55,6 +56,17 @@ class UserMatchingControllerTest {
         objectMapper = new ObjectMapper();
         login();
     }
+
+    @AfterAll
+    void tearDown() {
+        clearRedisData(); // 레디스 데이터 초기화
+    }
+
+    private void clearRedisData() {
+        Set<String> keys = redisTemplate.keys("user:*"); // "user:*" 패턴의 모든 키 조회
+        redisTemplate.delete(keys); // 모든 키 삭제
+    }
+
 
     @DisplayName("로그인")
     void login() {
@@ -76,8 +88,8 @@ class UserMatchingControllerTest {
     @DisplayName("추천 - 거리")
     void getUserWithinRadius() throws Exception {
         //given
-        UserProfile userProfile = matchingService.findUser(1L);
-        int radius = userProfile.getSearchRadius();
+        UserProfile profile = matchingService.findUser(1L);
+        int radius = profile.getSearchRadius();
 
         //when
         ResultActions action = mvc.perform(get("/api/matching/withinRadius")
@@ -172,6 +184,51 @@ class UserMatchingControllerTest {
             assertEquals("추천할 사용자가 없습니다.", jsonResponse2.getString("message"));
         } else{
             // 둘다 200 OK를 반환한 경우 ->  응답이 달라야함
+            JSONObject user1 = jsonResponse1.getJSONObject("data");
+            JSONObject user2 = jsonResponse2.getJSONObject("data");
+
+            assertNotEquals(user1.toString(), user2.toString());
+        }
+    }
+
+    @Test
+    @DisplayName("추천 - 영화")
+    void recommendByMovie() throws Exception {
+        // Given
+        redisTemplate.opsForValue().set("user:1", "movieCd1");
+        redisTemplate.opsForValue().set("user:2", "movieCd1");
+        redisTemplate.opsForValue().set("user:3", "movieCd2");
+        redisTemplate.opsForValue().set("user:4", "movieCd3");
+
+        // When
+        ResultActions action1 = mvc.perform(get("/api/matching/movie")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("Authorization", "Bearer " + jwtToken))
+                .andDo(print());
+        // 응답 파싱
+        int status1 = action1.andReturn().getResponse().getStatus();
+        String responseBody1 = action1.andReturn().getResponse().getContentAsString();
+        JSONObject jsonResponse1 = new JSONObject(responseBody1);
+
+        // 추천 2
+        ResultActions action2 = mvc.perform(get("/api/matching/movie")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .header("Authorization", "Bearer " + jwtToken))
+                .andDo(print());
+        // 응답 파싱
+        int status2 = action2.andReturn().getResponse().getStatus();
+        String responseBody2 = action2.andReturn().getResponse().getContentAsString();
+        JSONObject jsonResponse2 = new JSONObject(responseBody2);
+
+        // Then
+        if (status1 == HttpStatus.NOT_FOUND.value()) {
+            assertEquals("404", jsonResponse1.getString("code"));
+            assertEquals("추천할 사용자가 없습니다.", jsonResponse1.getString("message"));
+        } else if (status2 == HttpStatus.NOT_FOUND.value()) {
+            assertEquals("404", jsonResponse2.getString("code"));
+            assertEquals("추천할 사용자가 없습니다.", jsonResponse2.getString("message"));
+        } else {
+            // 둘다 200 OK를 반환한 경우 -> 응답이 달라야함
             JSONObject user1 = jsonResponse1.getJSONObject("data");
             JSONObject user2 = jsonResponse2.getJSONObject("data");
 

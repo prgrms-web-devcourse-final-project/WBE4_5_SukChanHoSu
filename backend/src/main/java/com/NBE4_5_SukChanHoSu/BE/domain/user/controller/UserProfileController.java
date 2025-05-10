@@ -1,11 +1,9 @@
 package com.NBE4_5_SukChanHoSu.BE.domain.user.controller;
 
-import com.NBE4_5_SukChanHoSu.BE.domain.user.dto.response.UserProfileResponse;
 import com.NBE4_5_SukChanHoSu.BE.domain.user.entity.User;
 import com.NBE4_5_SukChanHoSu.BE.domain.user.dto.request.ProfileUpdateRequest;
 import com.NBE4_5_SukChanHoSu.BE.domain.user.entity.UserProfile;
-import com.NBE4_5_SukChanHoSu.BE.domain.user.service.UserMatchingService;
-import com.NBE4_5_SukChanHoSu.BE.domain.user.service.UserService;
+import com.NBE4_5_SukChanHoSu.BE.domain.recommend.service.RecommendService;
 import com.NBE4_5_SukChanHoSu.BE.global.dto.RsData;
 import com.NBE4_5_SukChanHoSu.BE.global.util.SecurityUtil;
 import io.swagger.v3.oas.annotations.Operation;
@@ -20,9 +18,6 @@ import com.NBE4_5_SukChanHoSu.BE.domain.user.service.UserProfileService;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
-import java.util.List;
-
 @RestController
 @RequestMapping("/api/profile")
 @RequiredArgsConstructor
@@ -30,7 +25,7 @@ import java.util.List;
 public class UserProfileController {
 
     private final UserProfileService userProfileService;
-    private final UserMatchingService matchingService;
+    private final RecommendService matchingService;
 
     @Operation(summary = "프로필 등록", description = "회원가입 후 최초 프로필 등록")
     @PostMapping
@@ -64,8 +59,8 @@ public class UserProfileController {
     @Operation(summary = "프로필로 유저 객체 조회", description = "프로필 엔티티를 이용하여 유저 정보 가져오는지 확인")
     @GetMapping("/user")
     public RsData<User> getUser() {
-        User user = SecurityUtil.getCurrentUser();
-        Long profileId = user.getUserProfile().getUserId();
+        Long profileId = SecurityUtil.getCurrentUser().getUserProfile().getUserId();
+
         UserProfile profile = matchingService.findUser(profileId);
         return new RsData<>("200", "프로필 조회 성공", profile.getUser());
     }
@@ -74,22 +69,21 @@ public class UserProfileController {
     @GetMapping("/profile/me")
     //todo 임시, 이후 삭제
     public RsData<UserProfile> getMyProfile1() {
-        User user = SecurityUtil.getCurrentUser();
-        Long profileId = user.getUserProfile().getUserId();
-        UserProfile userProfile = matchingService.findUser(profileId);
-        return new RsData<>("200", "프로필 조회 성공", userProfile);
+        Long profileId = SecurityUtil.getCurrentUser().getUserProfile().getUserId();
+
+        UserProfile profile = matchingService.findUser(profileId);
+        return new RsData<>("200", "프로필 조회 성공", profile);
     }
 
     @Operation(summary = "범위 조절", description = "탐색 범위 조절")
     @PutMapping("/radius")
     public RsData<?> setRadius(@RequestParam Integer radius) {
-        User user = SecurityUtil.getCurrentUser();
-        Long profileId = user.getUserProfile().getUserId();
+        Long profileId = SecurityUtil.getCurrentUser().getUserProfile().getUserId();
 
-        UserProfile userProfile = matchingService.findUser(profileId);
-        userProfileService.setRadius(userProfile, radius);
+        UserProfile profile = matchingService.findUser(profileId);
+        userProfileService.setRadius(profile, radius);
 
-        return new RsData<>("200", "프로필 조회 성공", userProfile);
+        return new RsData<>("200", "프로필 조회 성공", profile);
     }
 
 }

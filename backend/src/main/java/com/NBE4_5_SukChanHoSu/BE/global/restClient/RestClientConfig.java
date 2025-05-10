@@ -1,4 +1,4 @@
-package com.NBE4_5_SukChanHoSu.BE.global.config;
+package com.NBE4_5_SukChanHoSu.BE.global.restClient;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

@@ -1,6 +1,6 @@
 package com.NBE4_5_SukChanHoSu.BE.global.interceptor;
 
-import com.NBE4_5_SukChanHoSu.BE.domain.user.service.UserMatchingService;
+import com.NBE4_5_SukChanHoSu.BE.domain.recommend.service.RecommendService;
 import com.NBE4_5_SukChanHoSu.BE.domain.user.service.UserProfileService;
 import com.NBE4_5_SukChanHoSu.BE.global.util.SecurityUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -8,7 +8,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
@@ -24,7 +23,7 @@ public class ProfileCheckInterceptor implements HandlerInterceptor {
 
     private final UserProfileService userProfileService;
     private final ObjectMapper objectMapper; // JSON 변환을 위한 ObjectMapper 주입
-    private final UserMatchingService matchingService;
+    private final RecommendService matchingService;
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {

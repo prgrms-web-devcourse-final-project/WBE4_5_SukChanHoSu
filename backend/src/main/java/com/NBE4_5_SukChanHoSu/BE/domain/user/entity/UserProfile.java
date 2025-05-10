@@ -1,7 +1,7 @@
 package com.NBE4_5_SukChanHoSu.BE.domain.user.entity;
 
-import com.NBE4_5_SukChanHoSu.BE.domain.likes.Matching;
-import com.NBE4_5_SukChanHoSu.BE.domain.likes.UserLikes;
+import com.NBE4_5_SukChanHoSu.BE.domain.likes.entity.Matching;
+import com.NBE4_5_SukChanHoSu.BE.domain.likes.entity.UserLikes;
 import com.NBE4_5_SukChanHoSu.BE.global.BaseTime;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;

@@ -1,11 +1,12 @@
-package com.NBE4_5_SukChanHoSu.BE.domain.user.service;
+package com.NBE4_5_SukChanHoSu.BE.domain.likes.service;
 
-import com.NBE4_5_SukChanHoSu.BE.domain.likes.Matching;
-import com.NBE4_5_SukChanHoSu.BE.domain.likes.MatchingRepository;
-import com.NBE4_5_SukChanHoSu.BE.domain.likes.UserLikes;
-import com.NBE4_5_SukChanHoSu.BE.domain.likes.UserLikesRepository;
+import com.NBE4_5_SukChanHoSu.BE.domain.likes.entity.Matching;
+import com.NBE4_5_SukChanHoSu.BE.domain.likes.repository.MatchingRepository;
+import com.NBE4_5_SukChanHoSu.BE.domain.likes.entity.UserLikes;
+import com.NBE4_5_SukChanHoSu.BE.domain.likes.repository.UserLikesRepository;
 import com.NBE4_5_SukChanHoSu.BE.domain.likes.dto.response.MatchingResponse;
 import com.NBE4_5_SukChanHoSu.BE.domain.likes.dto.response.UserMatchingResponse;
+import com.NBE4_5_SukChanHoSu.BE.domain.recommend.service.RecommendService;
 import com.NBE4_5_SukChanHoSu.BE.domain.user.dto.response.UserProfileResponse;
 import com.NBE4_5_SukChanHoSu.BE.domain.user.entity.Gender;
 import com.NBE4_5_SukChanHoSu.BE.domain.user.entity.UserProfile;
@@ -31,8 +32,7 @@ public class UserLikeService {
     private final EntityManager entityManager;
     private final RedisTemplate<String, Object> redisTemplate;
     private final RedisTTL ttl;
-    private UserProfileService userProfileService;
-    private final UserMatchingService matchingService;
+    private final RecommendService matchingService;
 
     @Transactional
     public UserLikes likeUser(UserProfile fromUser, UserProfile toUser) {

@@ -1,7 +1,6 @@
-package com.NBE4_5_SukChanHoSu.BE.domain.user.entity;
+package com.NBE4_5_SukChanHoSu.BE.domain.recommend.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 

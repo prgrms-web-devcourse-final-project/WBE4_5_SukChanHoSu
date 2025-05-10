@@ -1,6 +1,6 @@
 package com.NBE4_5_SukChanHoSu.BE.domain.likes.dto.response;
 
-import com.NBE4_5_SukChanHoSu.BE.domain.likes.UserLikes;
+import com.NBE4_5_SukChanHoSu.BE.domain.likes.entity.UserLikes;
 import com.NBE4_5_SukChanHoSu.BE.domain.user.dto.response.UserProfileResponse;
 import com.NBE4_5_SukChanHoSu.BE.domain.user.entity.UserProfile;
 import lombok.AllArgsConstructor;

@@ -1,5 +1,6 @@
-package com.NBE4_5_SukChanHoSu.BE.domain.likes;
+package com.NBE4_5_SukChanHoSu.BE.domain.likes.repository;
 
+import com.NBE4_5_SukChanHoSu.BE.domain.likes.entity.Matching;
 import com.NBE4_5_SukChanHoSu.BE.domain.user.entity.UserProfile;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
@@ -8,8 +9,6 @@ import java.util.List;
 
 @Repository
 public interface MatchingRepository extends JpaRepository<Matching, Long> {
-    // 매칭 정보 찾기
-    List<Matching> findByMaleUserOrFemaleUser(UserProfile maleUser, UserProfile femaleUser);
     // 남자 유저 매칭 정보 탐색
     List<Matching> findByMaleUser(UserProfile maleUser);
     // 여자 유저 매칭 정보 탐색

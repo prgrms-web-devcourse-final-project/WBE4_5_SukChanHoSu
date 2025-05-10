@@ -1,5 +1,6 @@
-package com.NBE4_5_SukChanHoSu.BE.domain.likes;
+package com.NBE4_5_SukChanHoSu.BE.domain.likes.repository;
 
+import com.NBE4_5_SukChanHoSu.BE.domain.likes.entity.UserLikes;
 import com.NBE4_5_SukChanHoSu.BE.domain.user.entity.UserProfile;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -7,7 +8,6 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.time.LocalDateTime;
-import java.util.Optional;
 
 @Repository
 public interface UserLikesRepository extends JpaRepository<UserLikes, Long> {

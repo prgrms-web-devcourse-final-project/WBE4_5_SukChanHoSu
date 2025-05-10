@@ -1,10 +1,12 @@
 package com.NBE4_5_SukChanHoSu.BE.domain.user.service;
 
+import com.NBE4_5_SukChanHoSu.BE.domain.recommend.service.DeleteSchedular;
+import com.NBE4_5_SukChanHoSu.BE.domain.recommend.service.RecommendService;
 import com.NBE4_5_SukChanHoSu.BE.domain.user.dto.response.UserProfileResponse;
 import com.NBE4_5_SukChanHoSu.BE.domain.user.entity.Gender;
-import com.NBE4_5_SukChanHoSu.BE.domain.user.entity.RecommendUser;
+import com.NBE4_5_SukChanHoSu.BE.domain.recommend.entity.RecommendUser;
 import com.NBE4_5_SukChanHoSu.BE.domain.user.entity.UserProfile;
-import com.NBE4_5_SukChanHoSu.BE.domain.user.repository.RecommendUserRepository;
+import com.NBE4_5_SukChanHoSu.BE.domain.recommend.repository.RecommendUserRepository;
 import com.NBE4_5_SukChanHoSu.BE.domain.user.repository.UserProfileRepository;
 import com.NBE4_5_SukChanHoSu.BE.global.config.BaseTestConfig;
 import com.NBE4_5_SukChanHoSu.BE.global.exception.user.UserNotFoundException;
@@ -30,18 +32,18 @@ import static org.mockito.Mockito.doAnswer;
 @AutoConfigureMockMvc
 @TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @BaseTestConfig
-class UserMatchingServiceTest {
+class RecommendServiceTest {
     @Autowired
     private UserProfileRepository userProfileRepository;
     @Autowired
-    private UserMatchingService matchingService;
+    private RecommendService matchingService;
     @Autowired
     private UserProfileService userProfileService;
 
     @Mock
     private RecommendUserRepository recommendUserRepository;
     @Mock
-    private RecommendService recommendService;
+    private DeleteSchedular deleteSchedular;
 
     private ObjectMapper objectMapper;
     @Autowired
@@ -134,9 +136,9 @@ class UserMatchingServiceTest {
             LocalDateTime cutoffDate = LocalDateTime.now().minusDays(30);
             recommendUserRepository.deleteByCreatedAtBefore(cutoffDate);
             return null;
-        }).when(recommendService).cleanUp();
+        }).when(deleteSchedular).cleanUp();
 
-        recommendService.cleanUp(); // 스케줄러 메서드 호출
+        deleteSchedular.cleanUp(); // 스케줄러 메서드 호출
 
         // Then
         assertFalse(recommendUserRepository.existsById(oldRecommendation.getId()));

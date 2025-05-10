@@ -31,14 +31,11 @@ public class BaseInitData {
     @Autowired
     @Lazy
     private BaseInitData self;
-    @Autowired
-    private UserProfileRepository userProfileRepository;
-    @Autowired
-    private UserService userService;
-    @Autowired
-    private UserRepository userRepository;
-    @Autowired
-    private RedisTemplate<String, String> redisTemplate;
+
+    private final UserProfileRepository userProfileRepository;
+    private final UserService userService;
+    private final UserRepository userRepository;
+    private final RedisTemplate<String, String> redisTemplate;
 
     @Bean
     @Order(1)
