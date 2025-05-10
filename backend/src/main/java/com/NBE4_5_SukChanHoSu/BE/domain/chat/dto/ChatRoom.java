@@ -5,27 +5,24 @@ import lombok.Getter;
 import lombok.Setter;
 import org.springframework.web.socket.WebSocketSession;
 
+import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
 
 @Getter
 @Setter
-public class ChatRoom {
+public class ChatRoom implements Serializable {
     private String roomId;
-    private String name;
-    private Set<WebSocketSession> sessions = new HashSet<>();
+    private String sender;
+    private String receiver;
 
     @Builder
-    public ChatRoom(String roomId, String name) {
+    public ChatRoom(String roomId, String sender, String receiver) {
         this.roomId = roomId;
-        this.name = name;
-    }
-
-    public void addSession(WebSocketSession session) {
-        sessions.add(session);
-    }
-
-    public void removeSession(WebSocketSession session) {
-        sessions.remove(session);
+        this.sender = sender;
+        this.receiver = receiver;
     }
 }
+
+
+

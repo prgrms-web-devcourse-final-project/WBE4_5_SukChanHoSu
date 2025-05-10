@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>채팅방 목록</title>
+</head>
+<body>
+<h2>채팅방 목록</h2>
+<div id="room-list"></div>
+
+<script>
+    fetch('http://localhost:8080/chat/rooms')  // ✅ 절대 경로로 수정
+        .then(response => response.json())
+        .then(rooms => {
+            const listDiv = document.getElementById('room-list');
+            rooms.forEach(room => {
+                const link = document.createElement('a');
+                link.href = `/chat_room.html?roomId=${room.roomId}`;
+                link.innerText = `💬 ${room.sender} ↔ ${room.receiver}`;
+                link.style.display = 'block';
+                listDiv.appendChild(link);
+            });
+        })
+        .catch(err => console.error('채팅방 목록 로딩 실패', err));
+</script>
+</body>
+</html>

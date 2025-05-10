@@ -21,12 +21,19 @@ public class ChatRoomService {
     @Resource(name = "redisTemplate")
     private HashOperations<String, String, ChatRoom> hashOps;
 
-    // 채팅방 생성
+    // 채팅방 생성 or 존재시 반환
     public ChatRoom createRoom(String sender, String receiver) {
+        for (ChatRoom room : findAllRooms()) {
+            boolean matched = (room.getSender().equals(sender) && room.getReceiver().equals(receiver)) ||
+                    (room.getSender().equals(receiver) && room.getReceiver().equals(sender));
+            if (matched) return room;
+        }
+
         String roomId = UUID.randomUUID().toString();
         ChatRoom chatRoom = ChatRoom.builder()
                 .roomId(roomId)
-                .name(sender + "_to_" + receiver)
+                .sender(sender)
+                .receiver(receiver)
                 .build();
 
         hashOps.put(CHAT_ROOMS, roomId, chatRoom);

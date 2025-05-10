@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <title>채팅방</title>
+    <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.5.1/dist/sockjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+</head>
+<body>
+<h2>채팅방</h2>
+<div id="chat-room-info"></div>
+<div id="chat-box" style="height: 200px; overflow-y: scroll; border: 1px solid #ccc; margin-top: 10px;"></div>
+
+<input type="text" id="sender" placeholder="보내는 사람 이름">
+<input type="text" id="message" placeholder="메시지 입력">
+<button onclick="sendMessage()">전송</button>
+
+<script>
+    const roomId = new URLSearchParams(window.location.search).get('roomId');
+    let stompClient = null;
+
+    function connect() {
+        const socket = new SockJS('http://localhost:8080/ws-stomp');
+        stompClient = Stomp.over(socket);
+        stompClient.connect({}, () => {
+            stompClient.subscribe(`/sub/chat/room/${roomId}`, (message) => {
+                const msg = JSON.parse(message.body);
+                showMessage(`${msg.sender}: ${msg.message}`);
+            });
+        });
+    }
+
+    window.sendMessage = function () {
+        const sender = document.getElementById('sender').value;
+        const message = document.getElementById('message').value;
+
+        if (!sender || !message) {
+            alert("이름과 메시지를 입력하세요");
+            return;
+        }
+
+        stompClient.send("/pub/chat/message", {}, JSON.stringify({
+            roomId: roomId,
+            sender: sender,
+            message: message
+        }));
+
+        document.getElementById('message').value = '';
+    };
+
+    function showMessage(text) {
+        const chatBox = document.getElementById('chat-box');
+        const msgDiv = document.createElement('div');
+        msgDiv.innerText = text;
+        chatBox.appendChild(msgDiv);
+        chatBox.scrollTop = chatBox.scrollHeight;
+    }
+
+    // 채팅방 정보 표시 및 연결
+    fetch(`http://localhost:8080/chat/rooms/${roomId}`)
+        .then(res => res.json())
+        .then(room => {
+            document.getElementById('chat-room-info').innerHTML =
+                `<p><strong>Room ID:</strong> ${room.roomId}</p>
+                 <p><strong>참여자:</strong> ${room.sender} ↔ ${room.receiver}</p>`;
+            connect();
+        })
+        .catch(err => console.error("채팅방 정보 불러오기 실패", err));
+</script>
+</body>
+</html>
