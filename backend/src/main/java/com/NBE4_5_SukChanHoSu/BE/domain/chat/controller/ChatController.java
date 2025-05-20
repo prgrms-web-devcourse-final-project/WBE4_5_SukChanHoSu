@@ -11,6 +11,8 @@ import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.stereotype.Controller;
+import com.NBE4_5_SukChanHoSu.BE.domain.chat.service.ChatMessageService;
+import java.time.LocalDateTime;
 
 import java.security.Principal;
 
@@ -20,6 +22,7 @@ import java.security.Principal;
 public class ChatController {
 
     private final SimpMessagingTemplate messagingTemplate;
+    private final ChatMessageService chatMessageService;
 
     @MessageMapping("/chat/message")
     public void sendMessage(@Payload ChatMessage message, Principal principal) {
@@ -43,8 +46,11 @@ public class ChatController {
         String nickname = details.getUser().getUserProfile().getNickName(); // or getUser().getNickname() if 존재
         message.setSender(nickname);
 
-
-         //메시지 전송
+        //현재 시간세팅
+        message.setSentAt(LocalDateTime.now());
+        // redis 저장
+        chatMessageService.saveMessage(message);
+        //메시지 전송
         messagingTemplate.convertAndSend("/sub/chat/room/" + message.getRoomId(), message);
     }
 }
