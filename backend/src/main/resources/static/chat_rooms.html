@@ -3,23 +3,113 @@
 <head>
     <meta charset="UTF-8">
     <title>채팅방 목록</title>
+    <style>
+        .chat-room {
+            display: block;
+            margin-bottom: 10px;
+            padding: 8px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            text-decoration: none;
+            color: black;
+        }
+        .last-message {
+            display: block;
+            font-size: 0.9em;
+            color: gray;
+        }
+        .unread-dot {
+            color: red;
+            margin-left: 5px;
+        }
+    </style>
 </head>
 <body>
 <h2>채팅방 목록</h2>
 <div id="room-list"></div>
 
+<script src="https://cdn.jsdelivr.net/npm/sockjs-client@1.5.1/dist/sockjs.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/stompjs@2.3.3/lib/stomp.min.js"></script>
+
 <script>
-    fetch('http://localhost:8080/chat/rooms')  // ✅ 절대 경로로 수정
-        .then(response => response.json())
-        .then(rooms => {
-            const listDiv = document.getElementById('room-list');
+    const currentUser = localStorage.getItem("nickname") || "TempUser2";
+    let stompClient = null;
+    let rooms = [];
+
+    console.log("👤 currentUser:", currentUser);
+
+    if (Notification.permission !== "granted" && Notification.permission !== "denied") {
+        Notification.requestPermission().then(permission => {
+            console.log("알림 권한:", permission);
+        });
+    }
+
+    function renderChatRooms(roomList) {
+        const listDiv = document.getElementById('room-list');
+        listDiv.innerHTML = '';
+        roomList.forEach(room => {
+            const link = document.createElement('a');
+            link.href = `/chat_room.html?roomId=${room.roomId}`;
+            link.className = "chat-room";
+            link.setAttribute("data-room-id", room.roomId);
+
+            link.innerHTML = `
+                💬 ${room.sender} ↔ ${room.receiver}<br/>
+                <span class="last-message">${room.lastMessage || '대화 없음'}</span>
+                <span class="unread-dot" style="display: ${room.unread ? 'inline' : 'none'}">●</span>
+            `;
+            listDiv.appendChild(link);
+        });
+    }
+
+    function updateChatRoomListUI(roomId, message) {
+        const link = document.querySelector(`[data-room-id="${roomId}"]`);
+        if (link) {
+            const lastMsg = link.querySelector('.last-message');
+            if (lastMsg) lastMsg.innerText = message;
+
+            const dot = link.querySelector('.unread-dot');
+            if (dot) dot.style.display = 'inline';
+        }
+    }
+
+    function connectWebSocket() {
+        const socket = new SockJS("http://localhost:8080/ws-stomp");
+        stompClient = Stomp.over(socket);
+
+        stompClient.connect({}, () => {
+            console.log("🔌 WebSocket 연결됨");
+
+            // 모든 채팅방에 대해 구독
             rooms.forEach(room => {
-                const link = document.createElement('a');
-                link.href = `/chat_room.html?roomId=${room.roomId}`;
-                link.innerText = `💬 ${room.sender} ↔ ${room.receiver}`;
-                link.style.display = 'block';
-                listDiv.appendChild(link);
+                stompClient.subscribe(`/sub/chatroom/update/${room.roomId}`, (msg) => {
+                    const data = JSON.parse(msg.body);
+                    console.log("📨 알림 수신됨:", data);
+                    updateChatRoomListUI(data.roomId, data.message);
+
+                    if (Notification.permission === "granted") {
+                        const notification = new Notification("📩 새 메시지 도착", {
+                            body: `${data.sender}: ${data.message}`,
+                            icon: "/chat-icon.png"
+                        });
+
+                        notification.onclick = () => {
+                            window.open(`/chat_room.html?roomId=${data.roomId}`, "_blank");
+                        };
+                    }
+                });
             });
+        });
+    }
+
+    // 채팅방 불러온 후 → UI 렌더링 + WebSocket 연결
+    fetch('http://localhost:8080/chat/rooms')
+        .then(response => response.json())
+        .then(data => {
+            if (!Array.isArray(data)) return;
+            rooms = data;
+            renderChatRooms(rooms);
+            connectWebSocket();
         })
         .catch(err => console.error('채팅방 목록 로딩 실패', err));
 </script>
