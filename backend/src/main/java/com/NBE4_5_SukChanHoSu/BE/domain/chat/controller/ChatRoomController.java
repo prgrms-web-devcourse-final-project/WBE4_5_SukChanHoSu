@@ -30,6 +30,15 @@ public class ChatRoomController {
     public ChatRoom createRoom(@RequestParam String sender, @RequestParam String receiver) {
         return chatRoomService.createRoom(sender, receiver);
     }
+    // 읽음처리
+    @PostMapping("/{roomId}/read")
+    public void markAsRead(@PathVariable String roomId) {
+        ChatRoom room = chatRoomService.findRoomById(roomId);
+        if (room != null) {
+            room.setUnread(false);
+            chatRoomService.saveRoom(room);
+        }
+    }
 
 
 }
