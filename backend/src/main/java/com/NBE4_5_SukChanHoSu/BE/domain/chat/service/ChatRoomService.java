@@ -56,4 +56,10 @@ public class ChatRoomService {
                 .map(obj -> objectMapper.convertValue(obj, ChatRoom.class))
                 .collect(Collectors.toList());
     }
+
+    // 방 업데이트 저장
+    public void saveRoom(ChatRoom room) {
+        hashOps.put(CHAT_ROOMS, room.getRoomId(), room);
+    }
+
 }
