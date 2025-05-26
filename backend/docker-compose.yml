@@ -1,4 +1,4 @@
-version: "3.8"
+version: '3.8'
 
 services:
   prometheus:
@@ -18,6 +18,8 @@ services:
       - app-network
     volumes:
       - grafana-storage:/var/lib/grafana
+    depends_on:
+      - prometheus
 
   redis:
     image: redis:latest
@@ -25,6 +27,8 @@ services:
     ports:
       - "6379:6379"
     restart: always
+    networks:
+      - app-network
 
   redis-exporter:
     image: oliver006/redis_exporter
@@ -35,6 +39,62 @@ services:
       - REDIS_ADDR=redis:6379
     networks:
       - app-network
+    depends_on:
+      - redis
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.17.10
+    container_name: elasticsearch
+    environment:
+      - discovery.type=single-node
+      - bootstrap.memory_lock=true
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - esdata:/usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    networks:
+      - app-network
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:7.17.10
+    container_name: kibana
+    ports:
+      - "5601:5601"
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    networks:
+      - app-network
+    depends_on:
+      - elasticsearch
+
+  influxdb:
+    image: influxdb:1.8
+    container_name: influxdb
+    ports:
+      - "8086:8086"
+    environment:
+      - INFLUXDB_DB=k6
+    volumes:
+      - influxdb-storage:/var/lib/influxdb
+    networks:
+      - app-network
+
+  k6:
+    image: grafana/k6
+    volumes:
+      - ./scripts:/scripts
+    depends_on:
+      - influxdb
+    command: run --out influxdb=http://host.docker.internal:8086/k6 /scripts/stressTest2.js
+    networks:
+      - app-network
+
 
 networks:
   app-network:
@@ -42,3 +102,5 @@ networks:
 
 volumes:
   grafana-storage:
+  influxdb-storage:
+  esdata:

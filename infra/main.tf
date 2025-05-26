@@ -287,7 +287,7 @@ resource "aws_instance" "ec2_1" {
 
 resource "aws_instance" "ec2_2" {
   ami                         = data.aws_ami.latest_amazon_linux.id
-  instance_type               = "t3.micro"
+  instance_type               = "t3.small"
   subnet_id                   = aws_subnet.subnet-01.id
   vpc_security_group_ids      = [aws_security_group.nginx-sg.id]
   associate_public_ip_address = true

@@ -28,9 +28,6 @@ import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 @Service
@@ -51,7 +48,6 @@ public class NoticeService {
 
     private String lastLikeId = "0-0"; // 초기값
     private String lastMatchId = "0-0"; // 초기값
-    private ExecutorService executorService = Executors.newSingleThreadExecutor();
 
     // 스트림 중지 메서드
     public void stop() {

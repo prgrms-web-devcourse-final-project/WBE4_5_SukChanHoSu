@@ -38,6 +38,7 @@ public class ProfileCheckInterceptor implements HandlerInterceptor {
                         (uri.equals("/api/token/reissue") && method.equalsIgnoreCase("POST")) ||
                         (uri.equals("/api/movie/review") && method.equalsIgnoreCase("GET"))||
                         (uri.equals("/api/monitoring/health") && method.equalsIgnoreCase("GET"))||
+                        (uri.equals("/actuator/**") && method.equalsIgnoreCase("GET"))||
                         (uri.startsWith("/api/movie"))
                 ) {
             return true;

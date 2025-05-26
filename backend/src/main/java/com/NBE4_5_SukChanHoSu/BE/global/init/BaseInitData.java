@@ -169,7 +169,6 @@ public class BaseInitData {
                         .posterImage("https://image.tmdb.org/t/p/w500/qmDpIHrmpJINaRKAfWQfftjCdyi.jpg")
                         .description("꿈속의 꿈으로 들어가는 액션 블록버스터")
                         .director("Christopher Nolan")
-                        .rating("PG-13")
                         .build(),
 
                 Movie.builder()
@@ -180,7 +179,16 @@ public class BaseInitData {
                         .posterImage("https://image.tmdb.org/t/p/w500/aZiK1mzNHRn7kvVxU3lK1ElGNRk.jpg")
                         .description("가상현실과 인간의 전쟁")
                         .director("Lana Wachowski, Lilly Wachowski")
-                        .rating("R")
+                        .build(),
+
+                Movie.builder()
+                        .movieId(20070003L)
+                        .title("example")
+                        .genresRaw("Action, Comedy")
+                        .releaseDate("19990331")
+                        .posterImage("https://image.tmdb.org/t/p/w500/aZiK1mzNHRn7kvVxU3lK1ElGNRk.jpg")
+                        .description("예시의 영화")
+                        .director("Lana Wachowski, Lilly Wachowski")
                         .build()
         );
         movieRepository.saveAll(movies);

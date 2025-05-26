@@ -2,10 +2,12 @@ package com.NBE4_5_SukChanHoSu.BE;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.data.elasticsearch.repository.config.EnableElasticsearchRepositories;
 import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
 
 @SpringBootApplication
 @EnableJpaAuditing
+@EnableElasticsearchRepositories(basePackages = "com.NBE4_5_SukChanHoSu.BE.domain.movie.repository")
 public class SukChanHoSuApplication {
 
     public static void main(String[] args) {
