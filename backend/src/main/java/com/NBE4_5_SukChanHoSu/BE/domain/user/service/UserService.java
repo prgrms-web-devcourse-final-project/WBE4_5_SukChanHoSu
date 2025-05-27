@@ -1,7 +1,9 @@
 package com.NBE4_5_SukChanHoSu.BE.domain.user.service;
 
 import com.NBE4_5_SukChanHoSu.BE.domain.admin.service.AdminMonitoringService;
-import com.NBE4_5_SukChanHoSu.BE.domain.user.dto.request.PasswordPutRequest;
+import com.NBE4_5_SukChanHoSu.BE.domain.email.service.EmailService;
+import com.NBE4_5_SukChanHoSu.BE.domain.user.dto.request.PasswordModifyRequest;
+import com.NBE4_5_SukChanHoSu.BE.domain.user.dto.request.PasswordUpdateRequest;
 import com.NBE4_5_SukChanHoSu.BE.domain.user.dto.request.UserLoginRequest;
 import com.NBE4_5_SukChanHoSu.BE.domain.user.dto.request.UserSignUpRequest;
 import com.NBE4_5_SukChanHoSu.BE.domain.user.dto.response.LoginResponse;
@@ -23,6 +25,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserService {
@@ -35,6 +38,7 @@ public class UserService {
     private final RedisTemplate<String, String> redisTemplate;
     private final AuthenticationManagerBuilder authenticationManagerBuilder;
     private final AdminMonitoringService adminMonitoringService;
+    private final EmailService emailService;
 
     public User join(UserSignUpRequest requestDto) {
         String verified = redisTemplate.opsForValue().get(EMAIL_VERIFY + requestDto.getEmail());
@@ -107,8 +111,9 @@ public class UserService {
     }
 
     @Transactional
-    public void passwordUpdate(PasswordPutRequest requestDto) {
-        User user = SecurityUtil.getCurrentUser();
+    public void passwordUpdate(PasswordUpdateRequest requestDto) {
+        User currentUser = SecurityUtil.getCurrentUser();
+        User user = userRepository.findByEmail(currentUser.getEmail());
 
         // 현재 비밀번호 확인
         if (!passwordEncoder.matches(requestDto.getCurrentPassword(), user.getPassword())) {
@@ -127,6 +132,21 @@ public class UserService {
         }
 
         // 비밀번호 업데이트
+        user.setPassword(passwordEncoder.encode(requestDto.getNewPassword()));
+    }
+
+    @Transactional
+    public void passwordModify(PasswordModifyRequest requestDto) {
+        User user = userRepository.findByEmail(requestDto.getEmail());
+
+        // 새 비밀번호와 확인 값 일치 확인
+        if (!requestDto.getNewPassword().equals(requestDto.getConfirmNewPassword())) {
+            throw new ServiceException(
+                    UserErrorCode.NEW_PASSWORDS_NOT_MATCH.getCode(),
+                    UserErrorCode.NEW_PASSWORDS_NOT_MATCH.getMessage()
+            );
+        }
+
         user.setPassword(passwordEncoder.encode(requestDto.getNewPassword()));
     }
 }

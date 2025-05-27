@@ -1,5 +1,6 @@
 package com.NBE4_5_SukChanHoSu.BE.domain.email.service;
 
+import com.NBE4_5_SukChanHoSu.BE.domain.user.repository.UserRepository;
 import com.NBE4_5_SukChanHoSu.BE.global.util.EmailUtil;
 import jakarta.mail.MessagingException;
 import jakarta.mail.internet.MimeMessage;
@@ -19,6 +20,7 @@ public class EmailService {
     private final JavaMailSender javaMailSender;
     private final RedisTemplate<String, String> redisTemplate;
     private final EmailUtil emailUtil;
+    private final UserRepository userRepository;
 
     private static final String EMAIL_AUTH = "emailAuth:";
     private static final String EMAIL_VERIFY = "emailVerify:";
@@ -39,7 +41,7 @@ public class EmailService {
         String key = EMAIL_AUTH + sendEmail;
         redisTemplate.opsForValue().set(key, authCode, authCodeExpirationMillis, TimeUnit.MILLISECONDS);
 
-        MimeMessage message = emailUtil.createMail(senderEmail, sendEmail, authCode);
+        MimeMessage message = emailUtil.createMailVerify(senderEmail, sendEmail, authCode);
         javaMailSender.send(message);
 
         return authCode;

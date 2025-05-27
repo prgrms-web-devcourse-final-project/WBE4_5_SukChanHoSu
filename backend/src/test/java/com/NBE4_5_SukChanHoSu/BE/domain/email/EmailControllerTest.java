@@ -82,7 +82,7 @@ class EmailControllerTest {
 
         // when
         when(redisTemplate.opsForValue()).thenReturn(valueOperations);
-        when(emailUtil.createMail(any(), any(), any())).thenReturn(mimeMessage);
+        when(emailUtil.createMailVerify(any(), any(), any())).thenReturn(mimeMessage);
 
         try (MockedStatic<EmailUtil> mockedUtil = Mockito.mockStatic(EmailUtil.class)) {
             mockedUtil.when(EmailUtil::createAuthCode).thenReturn(authCode);
@@ -94,7 +94,7 @@ class EmailControllerTest {
             assertEquals(authCode, result);
 
             verify(valueOperations).set(redisKey, authCode, 300000L, TimeUnit.MILLISECONDS);
-            verify(emailUtil).createMail(senderEmail, email, authCode);
+            verify(emailUtil).createMailVerify(senderEmail, email, authCode);
             verify(javaMailSender).send(mimeMessage);
         }
     }

@@ -20,6 +20,7 @@ public class EmailUtil {
     private static final int ALPHABET_COUNT = 26;
     private static final int ASCII_UPPERCASE_A = 65;
     private static final int DIGIT_COUNT = 10;
+    private static final int START_INDEX = 0;
 
     private static final String CHARSET_UTF8 = "UTF-8";
     private static final String CONTENT_TYPE_HTML = "html";
@@ -29,9 +30,9 @@ public class EmailUtil {
         Random random = new Random();
         StringBuilder key = new StringBuilder();
 
-        for (int i = 0; i < AUTH_CODE_LENGTH; i++) {
+        for (int i = START_INDEX; i < AUTH_CODE_LENGTH; i++) {
             int index = random.nextInt(CHAR_OR_DIGIT_DIVIDER);
-            if (index == 0) {
+            if (index == START_INDEX) {
                 key.append((char) (random.nextInt(ALPHABET_COUNT) + ASCII_UPPERCASE_A));
             } else {
                 key.append(random.nextInt(DIGIT_COUNT));
@@ -40,7 +41,7 @@ public class EmailUtil {
         return key.toString();
     }
 
-    public MimeMessage createMail(String from, String to, String authCode) throws MessagingException {
+    public MimeMessage createMailVerify(String from, String to, String authCode) throws MessagingException {
         MimeMessage message = javaMailSender.createMimeMessage();
         message.setFrom(from);
         message.setRecipients(MimeMessage.RecipientType.TO, to);

@@ -33,14 +33,15 @@ public class ProfileCheckInterceptor implements HandlerInterceptor {
         // 프로필 등록은 허용
         if ((uri.equals("/api/profile/info") && method.equalsIgnoreCase("POST")) ||
                 (uri.equals("/api/profile/images") && method.equalsIgnoreCase("POST")) ||
-                        (uri.equals("/api/email/send") && method.equalsIgnoreCase("POST")) ||
-                        (uri.equals("/api/email/verify") && method.equalsIgnoreCase("POST")) ||
-                        (uri.equals("/api/token/reissue") && method.equalsIgnoreCase("POST")) ||
-                        (uri.equals("/api/movie/review") && method.equalsIgnoreCase("GET"))||
-                        (uri.equals("/api/monitoring/health") && method.equalsIgnoreCase("GET"))||
-                        (uri.equals("/actuator/**") && method.equalsIgnoreCase("GET"))||
-                        (uri.startsWith("/api/movie"))
-                ) {
+                (uri.equals("/api/email/send") && method.equalsIgnoreCase("POST")) ||
+                (uri.equals("/api/email/verify") && method.equalsIgnoreCase("POST")) ||
+                (uri.equals("/api/token/reissue") && method.equalsIgnoreCase("POST")) ||
+                (uri.equals("/api/movie/review") && method.equalsIgnoreCase("GET")) ||
+                (uri.equals("/api/monitoring/health") && method.equalsIgnoreCase("GET")) ||
+                (uri.equals("/actuator/**") && method.equalsIgnoreCase("GET")) ||
+                (uri.equals("/api/auth/non") && method.equalsIgnoreCase("PATCH")) ||
+                (uri.startsWith("/api/movie"))
+        ) {
             return true;
         }
         Long userId = SecurityUtil.getCurrentUserId();

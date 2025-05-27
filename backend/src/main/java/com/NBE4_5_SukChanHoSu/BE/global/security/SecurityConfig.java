@@ -30,7 +30,7 @@ public class SecurityConfig {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 
         http
-                .cors(  cors -> cors.configurationSource(corsConfigurationSource()))
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests((authorizeHttpRequests) ->
                         authorizeHttpRequests
                                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
@@ -53,7 +53,7 @@ public class SecurityConfig {
                                 .requestMatchers("/.well-known/**").permitAll()
 
                                 // 채팅 정적 리소스 허용
-                                .requestMatchers("/chat_rooms.html", "/chat_room.html","/chat.html", "/webjars/**", "/static/**", "/css/**", "/js/**", "/images/**", "/favicon.ico", "/ws-stomp/**", "/ws-stomp", "/chat/rooms", "/chat/rooms/**", "login.html").permitAll()
+                                .requestMatchers("/chat_rooms.html", "/chat_room.html", "/chat.html", "/webjars/**", "/static/**", "/css/**", "/js/**", "/images/**", "/favicon.ico", "/ws-stomp/**", "/ws-stomp", "/chat/rooms", "/chat/rooms/**", "login.html").permitAll()
 
                                 // Public endpoints
                                 .requestMatchers(HttpMethod.GET, "/h2-console/**").permitAll()
