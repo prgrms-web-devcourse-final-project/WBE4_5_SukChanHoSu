@@ -1,6 +1,7 @@
 package com.NBE4_5_SukChanHoSu.BE.domain.user.service;
 
 import com.NBE4_5_SukChanHoSu.BE.domain.admin.service.AdminMonitoringService;
+import com.NBE4_5_SukChanHoSu.BE.domain.user.dto.request.PasswordPutRequest;
 import com.NBE4_5_SukChanHoSu.BE.domain.user.dto.request.UserLoginRequest;
 import com.NBE4_5_SukChanHoSu.BE.domain.user.dto.request.UserSignUpRequest;
 import com.NBE4_5_SukChanHoSu.BE.domain.user.dto.response.LoginResponse;
@@ -12,6 +13,7 @@ import com.NBE4_5_SukChanHoSu.BE.domain.user.responseCode.UserErrorCode;
 import com.NBE4_5_SukChanHoSu.BE.global.exception.ServiceException;
 import com.NBE4_5_SukChanHoSu.BE.global.jwt.service.TokenService;
 import com.NBE4_5_SukChanHoSu.BE.global.util.SecurityUtil;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -102,5 +104,29 @@ public class UserService {
     public void deleteUser() {
         User user = SecurityUtil.getCurrentUser();
         userRepository.delete(user);
+    }
+
+    @Transactional
+    public void passwordUpdate(PasswordPutRequest requestDto) {
+        User user = SecurityUtil.getCurrentUser();
+
+        // 현재 비밀번호 확인
+        if (!passwordEncoder.matches(requestDto.getCurrentPassword(), user.getPassword())) {
+            throw new ServiceException(
+                    UserErrorCode.PASSWORDS_NOT_MATCH.getCode(),
+                    UserErrorCode.PASSWORDS_NOT_MATCH.getMessage()
+            );
+        }
+
+        // 새 비밀번호와 확인 값 일치 확인
+        if (!requestDto.getNewPassword().equals(requestDto.getConfirmNewPassword())) {
+            throw new ServiceException(
+                    UserErrorCode.NEW_PASSWORDS_NOT_MATCH.getCode(),
+                    UserErrorCode.NEW_PASSWORDS_NOT_MATCH.getMessage()
+            );
+        }
+
+        // 비밀번호 업데이트
+        user.setPassword(passwordEncoder.encode(requestDto.getNewPassword()));
     }
 }

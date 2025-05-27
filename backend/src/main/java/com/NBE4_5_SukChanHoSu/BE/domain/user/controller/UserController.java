@@ -1,5 +1,6 @@
 package com.NBE4_5_SukChanHoSu.BE.domain.user.controller;
 
+import com.NBE4_5_SukChanHoSu.BE.domain.user.dto.request.PasswordPutRequest;
 import com.NBE4_5_SukChanHoSu.BE.domain.user.dto.request.UserLoginRequest;
 import com.NBE4_5_SukChanHoSu.BE.domain.user.dto.request.UserSignUpRequest;
 import com.NBE4_5_SukChanHoSu.BE.domain.user.dto.response.LoginResponse;
@@ -19,6 +20,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -148,6 +150,25 @@ public class UserController {
         return new RsData<>(
                 UserSuccessCode.LOGOUT_SUCCESS.getCode(),
                 UserSuccessCode.LOGOUT_SUCCESS.getMessage()
+        );
+    }
+
+    @PatchMapping
+    @Operation(
+            summary = "비밀번호 변경",
+            description = "현재 비밀번호를 확인한 후, 새 비밀번호로 변경합니다.",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "비밀번호 변경 성공"),
+                    @ApiResponse(responseCode = "400", description = "새 비밀번호와 확인 비밀번호가 일치하지 않음"),
+                    @ApiResponse(responseCode = "400", description = "현재 비밀번호가 일치하지 않음")
+            }
+    )
+    public RsData<?> userPasswordUpdate(@RequestBody PasswordPutRequest requestDto) {
+        userService.passwordUpdate(requestDto);
+
+        return new RsData<>(
+                UserSuccessCode.PASSWORD_UPDATE_SUCCESS.getCode(),
+                UserSuccessCode.PASSWORD_UPDATE_SUCCESS.getMessage()
         );
     }
 
