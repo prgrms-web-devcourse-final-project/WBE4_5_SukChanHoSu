@@ -1,8 +1,8 @@
 package com.NBE4_5_SukChanHoSu.BE.domain.movie.service;
 
-import com.NBE4_5_SukChanHoSu.BE.domain.movie.document.MovieDocument;
+//import com.NBE4_5_SukChanHoSu.BE.domain.movie.document.MovieDocument;
 import com.NBE4_5_SukChanHoSu.BE.domain.movie.entity.Movie;
-import com.NBE4_5_SukChanHoSu.BE.domain.movie.repository.MovieElasticsearchRepository;
+//import com.NBE4_5_SukChanHoSu.BE.domain.movie.repository.MovieElasticsearchRepository;
 import com.NBE4_5_SukChanHoSu.BE.domain.movie.repository.MovieRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
