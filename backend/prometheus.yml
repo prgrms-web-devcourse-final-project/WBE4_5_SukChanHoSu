@@ -15,4 +15,4 @@ scrape_configs:
   - job_name: 'ec2-server'
     metrics_path: '/actuator/prometheus'
     static_configs:
-      -  targets: ['176.32.93.155:8081']
+      -  targets: ['176.32.93.155:8080']
