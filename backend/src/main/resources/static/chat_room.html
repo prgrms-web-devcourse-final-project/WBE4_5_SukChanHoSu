@@ -16,11 +16,12 @@
 
 <script>
     const roomId = new URLSearchParams(window.location.search).get('roomId');
+    const rawToken = localStorage.getItem("accessToken")?.trim();
+    const token = rawToken?.startsWith("Bearer ") ? rawToken : `Bearer ${rawToken}`;
     let stompClient = null;
 
     function connect() {
-        const token = localStorage.getItem("accessToken");
-        const socket = new SockJS(`http://localhost:8080/ws-stomp?token=${token}`);
+        const socket = new SockJS(`http://localhost:8080/ws-stomp?token=${encodeURIComponent(token)}`);
         stompClient = Stomp.over(socket);
 
         stompClient.connect(
@@ -28,7 +29,7 @@
             () => {
                 stompClient.subscribe(`/sub/chat/room/${roomId}`, (message) => {
                     const msg = JSON.parse(message.body);
-                    showMessage(`${msg.sender}: ${msg.message}`);
+                    showMessage(msg);
                 });
             },
             (error) => {
@@ -39,40 +40,78 @@
 
     function sendMessage() {
         const message = document.getElementById('message').value;
-
-        if (!message) {
-            alert("메시지를 입력하세요");
-            return;
-        }
+        if (!message) return alert("메시지를 입력하세요");
 
         stompClient.send("/pub/chat/message", {}, JSON.stringify({
             roomId: roomId,
             message: message
         }));
-
         document.getElementById('message').value = '';
     }
 
-    function showMessage(text) {
+    function showMessage(msg) {
         const chatBox = document.getElementById('chat-box');
         const msgDiv = document.createElement('div');
-        msgDiv.innerText = text;
+
+        let time = "";
+        if (msg.sentAt) {
+            const date = new Date(msg.sentAt);
+            const hours = date.getHours();
+            const minutes = String(date.getMinutes()).padStart(2, '0');
+            const ampm = hours >= 12 ? '오후' : '오전';
+            const hour12 = hours % 12 || 12;
+            time = `${ampm} ${hour12}:${minutes}`;
+        }
+
+        msgDiv.innerText = `[${time}] ${msg.sender}: ${msg.message}`;
         chatBox.appendChild(msgDiv);
         chatBox.scrollTop = chatBox.scrollHeight;
     }
 
-    // 채팅방 정보 불러오기 + 연결
+    function loadChatHistory() {
+        fetch(`http://localhost:8080/chat/rooms/${roomId}/messages`, {
+            headers: {
+                'Authorization': token
+            }
+        })
+            .then(res => res.json())
+            .then(messages => {
+                messages.forEach(msg => showMessage(msg));
+            })
+            .catch(err => console.error("채팅 내역 불러오기 실패", err));
+    }
+
+    function markRoomAsRead(roomId) {
+        fetch(`http://localhost:8080/chat/rooms/${roomId}/read`, {
+            method: "POST",
+            headers: {
+                'Authorization': token
+            }
+        })
+            .then(() => {
+                console.log(`✅ 채팅방 ${roomId} 읽음 처리 완료`);
+            })
+            .catch(err => {
+                console.error("❌ 읽음 처리 실패", err);
+            });
+    }
+
+    // 채팅방 정보 + 히스토리 + 연결
     fetch(`http://localhost:8080/chat/rooms/${roomId}`)
         .then(res => res.json())
         .then(room => {
             document.getElementById('chat-room-info').innerHTML =
                 `<p><strong>Room ID:</strong> ${room.roomId}</p>
                  <p><strong>참여자:</strong> ${room.sender} ↔ ${room.receiver}</p>`;
-            connect();
+
+            // ✅ 읽음 처리
+            markRoomAsRead(room.roomId);
+
+            loadChatHistory(); // ✅ 이전 대화 불러오기
+            connect();         // ✅ WebSocket 연결
         })
         .catch(err => console.error("채팅방 정보 불러오기 실패", err));
 
-    // 버튼 이벤트 등록
     document.getElementById("send-btn").addEventListener("click", sendMessage);
 </script>
 </body>

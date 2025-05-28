@@ -17,7 +17,9 @@ public class ChatRoom implements Serializable {
     private String roomId;
     private String sender;
     private String receiver;
-
+    private String lastMessage;
+    private String lastMessageTime;
+    private boolean unread; // 새 메시지 true: 안 읽음
 }
 
 
