@@ -1,5 +1,7 @@
 package com.NBE4_5_SukChanHoSu.BE.global.init;
 
+import com.NBE4_5_SukChanHoSu.BE.domain.likes.dto.response.MatchingResponse;
+import com.NBE4_5_SukChanHoSu.BE.domain.likes.service.UserLikeService;
 import com.NBE4_5_SukChanHoSu.BE.domain.movie.entity.Movie;
 import com.NBE4_5_SukChanHoSu.BE.domain.movie.repository.MovieRepository;
 import com.NBE4_5_SukChanHoSu.BE.domain.movie.review.dto.request.ReviewCreateDto;
@@ -50,6 +52,8 @@ public class BaseInitData {
     @Autowired
     private MovieRepository movieRepository;
 
+    private final UserLikeService userLikeService;
+
     private static final String LIKE_STREAM = "like";
     private static final String MATCH_STREAM = "matching";
 
@@ -60,6 +64,11 @@ public class BaseInitData {
             self.profileInit();
             self.movieInit();
             self.reviewInit();
+            self.likeInit1();
+            self.likeInit2();
+            self.likeInit3();
+            self.likeInit4();
+            self.likeInit5();
         };
     }
 
@@ -73,7 +82,7 @@ public class BaseInitData {
 
         Random random = new Random();
 
-        for (int i = 1; i <= 10; i++) {
+        for (int i = 1; i <= 40; i++) {
             String newEmail = "initUser" + i + "@example.com";
             redisTemplate.opsForValue().set("emailVerify:" + newEmail, "true", 5, TimeUnit.MINUTES);
             UserSignUpRequest signUpDto = UserSignUpRequest.builder()
@@ -203,4 +212,216 @@ public class BaseInitData {
             redisTemplate.opsForStream().createGroup(MATCH_STREAM, "match-group");
         }
     }
+
+    @Transactional
+    public void likeInit1() {
+        // 홀수 유저 ID 리스트 (11, 13, 15, 17, 19)
+        List<Long> oddUserIds = List.of(11L, 13L, 15L, 17L, 19L);
+
+        // 짝수 유저 ID 리스트 (10, 12, 14, 16, 18)
+        List<Long> evenUserIds = List.of(10L, 12L, 14L, 16L, 18L);
+
+        // 홀수 유저가 짝수 유저에게 like 전송
+        for (Long oddUserId : oddUserIds) {
+            for (Long evenUserId : evenUserIds) {
+                // 유저 프로필 조회
+                UserProfile fromUser = userProfileRepository.findById(oddUserId)
+                        .orElseThrow(() -> new RuntimeException("유저를 찾을 수 없습니다: " + oddUserId));
+                UserProfile toUser = userProfileRepository.findById(evenUserId)
+                        .orElseThrow(() -> new RuntimeException("유저를 찾을 수 없습니다: " + evenUserId));
+
+                // 이미 like를 보낸 상태인지 확인
+                if (!userLikeService.isAlreadyLikes(fromUser, toUser) && !userLikeService.isAlreadyMatched(fromUser, toUser)) {
+                    // like 전송
+                    userLikeService.likeUser(fromUser, toUser);
+                    System.out.println("유저 " + oddUserId + "가 유저 " + evenUserId + "에게 like를 전송했습니다.");
+
+                    // 매칭 상태 확인 및 처리
+                    if (userLikeService.isAlreadyLiked(fromUser, toUser)) {
+                        MatchingResponse response = userLikeService.matching(fromUser, toUser);
+                        System.out.println("매칭 완료: 유저 " + oddUserId + "와 유저 " + evenUserId);
+                    }
+                } else {
+                    System.out.println("유저 " + oddUserId + "는 이미 유저 " + evenUserId + "에게 like를 보낸 상태입니다.");
+                }
+            }
+        }
+
+        // 짝수 유저가 홀수 유저에게 like 전송
+        for (Long evenUserId : evenUserIds) {
+            for (Long oddUserId : oddUserIds) {
+                // 유저 프로필 조회
+                UserProfile fromUser = userProfileRepository.findById(evenUserId)
+                        .orElseThrow(() -> new RuntimeException("유저를 찾을 수 없습니다: " + evenUserId));
+                UserProfile toUser = userProfileRepository.findById(oddUserId)
+                        .orElseThrow(() -> new RuntimeException("유저를 찾을 수 없습니다: " + oddUserId));
+
+                // 이미 like를 보낸 상태인지 확인
+                if (!userLikeService.isAlreadyLikes(fromUser, toUser) && !userLikeService.isAlreadyMatched(fromUser, toUser)) {
+                    // like 전송
+                    userLikeService.likeUser(fromUser, toUser);
+                    System.out.println("유저 " + evenUserId + "가 유저 " + oddUserId + "에게 like를 전송했습니다.");
+
+                    // 매칭 상태 확인 및 처리
+                    if (userLikeService.isAlreadyLiked(fromUser, toUser)) {
+                        MatchingResponse response = userLikeService.matching(fromUser, toUser);
+                        System.out.println("매칭 완료: 유저 " + evenUserId + "와 유저 " + oddUserId);
+                    }
+                } else {
+                    System.out.println("유저 " + evenUserId + "는 이미 유저 " + oddUserId + "에게 like를 보낸 상태입니다.");
+                }
+            }
+        }
+
+        System.out.println("likeInit1 더미 데이터 생성 완료!");
+    }
+
+    @Transactional
+    public void likeInit2() {
+        // 홀수 유저 ID 리스트 (11, 13, 15, 17, 19)
+        List<Long> oddUserIds = List.of(11L, 13L, 15L, 17L, 19L);
+
+        // 짝수 유저 ID 리스트 (20, 22, 24, 26, 28)
+        List<Long> evenUserIds = List.of(20L, 22L, 24L, 26L, 28L);
+
+        // 홀수 유저가 짝수 유저에게 like 전송
+        for (Long oddUserId : oddUserIds) {
+            for (Long evenUserId : evenUserIds) {
+                // 유저 프로필 조회
+                UserProfile fromUser = userProfileRepository.findById(oddUserId)
+                        .orElseThrow(() -> new RuntimeException("유저를 찾을 수 없습니다: " + oddUserId));
+                UserProfile toUser = userProfileRepository.findById(evenUserId)
+                        .orElseThrow(() -> new RuntimeException("유저를 찾을 수 없습니다: " + evenUserId));
+
+                // 이미 like를 보낸 상태인지 확인
+                if (!userLikeService.isAlreadyLikes(fromUser, toUser) && !userLikeService.isAlreadyMatched(fromUser, toUser)) {
+                    // like 전송
+                    userLikeService.likeUser(fromUser, toUser);
+                    System.out.println("유저 " + oddUserId + "가 유저 " + evenUserId + "에게 like를 전송했습니다.");
+
+                    // 매칭 상태 확인 및 처리
+                    if (userLikeService.isAlreadyLiked(fromUser, toUser)) {
+                        MatchingResponse response = userLikeService.matching(fromUser, toUser);
+                        System.out.println("매칭 완료: 유저 " + oddUserId + "와 유저 " + evenUserId);
+                    }
+                } else {
+                    System.out.println("유저 " + oddUserId + "는 이미 유저 " + evenUserId + "에게 like를 보낸 상태입니다.");
+                }
+            }
+        }
+
+        System.out.println("likeInit2 더미 데이터 생성 완료!");
+    }
+
+    @Transactional
+    public void likeInit3() {
+        // 짝수 유저 ID 리스트 (10, 12, 14, 16, 18)
+        List<Long> evenUserIds = List.of(10L, 12L, 14L, 16L, 18L);
+
+        // 홀수 유저 ID 리스트 (21, 23, 25, 27, 29)
+        List<Long> oddUserIds = List.of(21L, 23L, 25L, 27L, 29L);
+
+        // 짝수 유저가 홀수 유저에게 like 전송
+        for (Long evenUserId : evenUserIds) {
+            for (Long oddUserId : oddUserIds) {
+                // 유저 프로필 조회
+                UserProfile fromUser = userProfileRepository.findById(evenUserId)
+                        .orElseThrow(() -> new RuntimeException("유저를 찾을 수 없습니다: " + evenUserId));
+                UserProfile toUser = userProfileRepository.findById(oddUserId)
+                        .orElseThrow(() -> new RuntimeException("유저를 찾을 수 없습니다: " + oddUserId));
+
+                // 이미 like를 보낸 상태인지 확인
+                if (!userLikeService.isAlreadyLikes(fromUser, toUser) && !userLikeService.isAlreadyMatched(fromUser, toUser)) {
+                    // like 전송
+                    userLikeService.likeUser(fromUser, toUser);
+                    System.out.println("유저 " + evenUserId + "가 유저 " + oddUserId + "에게 like를 전송했습니다.");
+
+                    // 매칭 상태 확인 및 처리
+                    if (userLikeService.isAlreadyLiked(fromUser, toUser)) {
+                        MatchingResponse response = userLikeService.matching(fromUser, toUser);
+                        System.out.println("매칭 완료: 유저 " + evenUserId + "와 유저 " + oddUserId);
+                    }
+                } else {
+                    System.out.println("유저 " + evenUserId + "는 이미 유저 " + oddUserId + "에게 like를 보낸 상태입니다.");
+                }
+            }
+        }
+
+        System.out.println("likeInit3 더미 데이터 생성 완료!");
+    }
+
+    @Transactional
+    public void likeInit4() {
+        // 짝수 유저 ID 리스트 (30, 32, 34, 36, 38)
+        List<Long> evenUserIds = List.of(30L, 32L, 34L, 36L, 38L);
+
+        // 홀수 유저 ID 리스트 (11, 13, 15, 17, 19)
+        List<Long> oddUserIds = List.of(11L, 13L, 15L, 17L, 19L);
+
+        // 짝수 유저가 홀수 유저에게 like 전송
+        for (Long evenUserId : evenUserIds) {
+            for (Long oddUserId : oddUserIds) {
+                // 유저 프로필 조회
+                UserProfile fromUser = userProfileRepository.findById(evenUserId)
+                        .orElseThrow(() -> new RuntimeException("유저를 찾을 수 없습니다: " + evenUserId));
+                UserProfile toUser = userProfileRepository.findById(oddUserId)
+                        .orElseThrow(() -> new RuntimeException("유저를 찾을 수 없습니다: " + oddUserId));
+
+                // 이미 like를 보낸 상태인지 확인
+                if (!userLikeService.isAlreadyLikes(fromUser, toUser) && !userLikeService.isAlreadyMatched(fromUser, toUser)) {
+                    // like 전송
+                    userLikeService.likeUser(fromUser, toUser);
+                    System.out.println("유저 " + evenUserId + "가 유저 " + oddUserId + "에게 like를 전송했습니다.");
+
+                    // 매칭 상태 확인 및 처리
+                    if (userLikeService.isAlreadyLiked(fromUser, toUser)) {
+                        MatchingResponse response = userLikeService.matching(fromUser, toUser);
+                        System.out.println("매칭 완료: 유저 " + evenUserId + "와 유저 " + oddUserId);
+                    }
+                } else {
+                    System.out.println("유저 " + evenUserId + "는 이미 유저 " + oddUserId + "에게 like를 보낸 상태입니다.");
+                }
+            }
+        }
+
+        System.out.println("likeInit4 더미 데이터 생성 완료!");
+    }
+
+    @Transactional
+    public void likeInit5() {
+        // 홀수 유저 ID 리스트 (31, 33, 35, 37, 39)
+        List<Long> oddUserIds = List.of(31L, 33L, 35L, 37L, 39L);
+
+        // 짝수 유저 ID 리스트 (10, 12, 14, 16, 18)
+        List<Long> evenUserIds = List.of(10L, 12L, 14L, 16L, 18L);
+
+        // 홀수 유저가 짝수 유저에게 like 전송
+        for (Long oddUserId : oddUserIds) {
+            for (Long evenUserId : evenUserIds) {
+                // 유저 프로필 조회
+                UserProfile fromUser = userProfileRepository.findById(oddUserId)
+                        .orElseThrow(() -> new RuntimeException("유저를 찾을 수 없습니다: " + oddUserId));
+                UserProfile toUser = userProfileRepository.findById(evenUserId)
+                        .orElseThrow(() -> new RuntimeException("유저를 찾을 수 없습니다: " + evenUserId));
+
+                // 이미 like를 보낸 상태인지 확인
+                if (!userLikeService.isAlreadyLikes(fromUser, toUser) && !userLikeService.isAlreadyMatched(fromUser, toUser)) {
+                    // like 전송
+                    userLikeService.likeUser(fromUser, toUser);
+                    System.out.println("유저 " + oddUserId + "가 유저 " + evenUserId + "에게 like를 전송했습니다.");
+
+                    // 매칭 상태 확인 및 처리
+                    if (userLikeService.isAlreadyLiked(fromUser, toUser)) {
+                        MatchingResponse response = userLikeService.matching(fromUser, toUser);
+                        System.out.println("매칭 완료: 유저 " + oddUserId + "와 유저 " + evenUserId);
+                    }
+                } else {
+                    System.out.println("유저 " + oddUserId + "는 이미 유저 " + evenUserId + "에게 like를 보낸 상태입니다.");
+                }
+            }
+        }
+
+        System.out.println("likeInit5 더미 데이터 생성 완료!");
+    }
+
 }
