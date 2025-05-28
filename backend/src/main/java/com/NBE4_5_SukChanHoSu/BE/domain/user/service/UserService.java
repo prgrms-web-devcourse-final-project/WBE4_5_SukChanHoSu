@@ -110,7 +110,7 @@ public class UserService {
     }
 
     @Transactional
-    public void passwordUpdate(PasswordUpdateRequest requestDto) {
+    public void passwordUpdate(String refreshToken, PasswordUpdateRequest requestDto) {
         User currentUser = SecurityUtil.getCurrentUser();
         User user = userRepository.findByEmail(currentUser.getEmail());
 
@@ -132,6 +132,8 @@ public class UserService {
 
         // 비밀번호 업데이트
         user.setPassword(passwordEncoder.encode(requestDto.getNewPassword()));
+
+        logout(refreshToken);
     }
 
     @Transactional

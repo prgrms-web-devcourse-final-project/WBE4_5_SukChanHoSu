@@ -174,15 +174,42 @@ public class UserController {
     @PatchMapping
     @Operation(
             summary = "비밀번호 변경",
-            description = "현재 비밀번호를 확인한 후, 새 비밀번호로 변경합니다.",
+            description = "로그인 한 사용자가 비밀번호 변경을 희망할 경우 현재 비밀번호와 새 비밀번호를 입력하여 비밀번호를 변경합니다. 이후 로그아웃 처리가 되어 재로그인을 하게끔 설정",
             responses = {
                     @ApiResponse(responseCode = "200", description = "비밀번호 변경 성공"),
                     @ApiResponse(responseCode = "400", description = "새 비밀번호와 확인 비밀번호가 일치하지 않음"),
                     @ApiResponse(responseCode = "400", description = "현재 비밀번호가 일치하지 않음")
             }
     )
-    public RsData<?> userPasswordUpdate(@RequestBody PasswordUpdateRequest requestDto) {
-        userService.passwordUpdate(requestDto);
+    public RsData<?> userPasswordUpdate(
+            HttpServletRequest request,
+            HttpServletResponse response,
+            @RequestBody PasswordUpdateRequest requestDto) {
+
+        String authHeader = request.getHeader(AUTHORIZATION_HEADER);
+        String accessToken = null;
+
+        if (authHeader != null && authHeader.startsWith(BEARER_PREFIX)) {
+            accessToken = authHeader.substring(7);
+        }
+
+        if (accessToken == null) {
+            accessToken = cookieUtil.getAccessTokenFromCookie(request);
+        }
+
+        String refreshToken = cookieUtil.getRefreshTokenFromCookie(request);
+
+        if (accessToken == null || refreshToken == null) {
+            return new RsData<>(
+                    UserErrorCode.LOGOUT_UNAUTHORIZED.getCode(),
+                    UserErrorCode.LOGOUT_UNAUTHORIZED.getMessage()
+            );
+        }
+
+        userService.passwordUpdate(refreshToken, requestDto);
+
+        cookieUtil.deleteAccessTokenFromCookie(response);
+        cookieUtil.deleteRefreshTokenFromCookie(response);
 
         return new RsData<>(
                 UserSuccessCode.PASSWORD_UPDATE_SUCCESS.getCode(),
