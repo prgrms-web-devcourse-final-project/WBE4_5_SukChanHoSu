@@ -54,6 +54,9 @@ spring:
         data: 604800 # 1주일
         rank: 604800 # 1주일
         detail: 86400 # 1일
+    elasticsearch:
+      uris: ${ELASTICSEARCH.URIS}
+
   logging:
     level:
       com.example: INFO

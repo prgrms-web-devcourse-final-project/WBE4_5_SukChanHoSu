@@ -153,6 +153,22 @@ resource "aws_security_group" "nginx-sg" {
   }
 
   ingress {
+    description = "elasticsearch"
+    from_port   = 9200
+    to_port     = 9200
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
+    description = "grafana"
+    from_port   = 8086
+    to_port     = 8086
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  ingress {
     description = "Redis Exporter"
     from_port   = 9121
     to_port     = 9121
