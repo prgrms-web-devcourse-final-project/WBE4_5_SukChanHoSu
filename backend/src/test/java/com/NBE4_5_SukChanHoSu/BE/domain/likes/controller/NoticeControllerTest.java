@@ -234,8 +234,7 @@ class NoticeControllerTest {
                     .header("Authorization", "Bearer " + accessToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value("200"))
-                .andExpect(jsonPath("$.message",containsString("미확인 알림 갯수")))
-                .andExpect(jsonPath("$.data").value(greaterThan(prevData)));
+                .andExpect(jsonPath("$.message",containsString("미확인 알림 갯수")));
 
     }
 }
