@@ -46,6 +46,7 @@ public class MovieService {
 
     private final RedisTemplate<String,Object> redisTemplate;
     private final RedisTTL ttl;
+    private final RestClient restClient;  // // redisTemplate -> webClient -> RestClient 로 외부 수집 프로토콜 변경
     private final ObjectMapper objectMapper;
     private final ApiClient apiClient;
 
@@ -136,7 +137,10 @@ public class MovieService {
             // 디테일 URL 생성
             String detailUrl = "https://api.themoviedb.org/3/movie/" + movieId + "?api_key=" + tmdbApiKey;
             // 응답 생성
-            String detailResponse = apiClient.getResponse(detailUrl);
+            String detailResponse = restClient.get() // get 요청
+                    .uri(detailUrl)    // URL 설정
+                    .retrieve()     // 응답
+                    .body(String.class);    // String 변환
 
             // 상세 정보 반환
             return objectMapper.readValue(detailResponse, new TypeReference<Map<String, Object>>() {});

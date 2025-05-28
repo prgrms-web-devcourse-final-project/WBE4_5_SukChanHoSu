@@ -3,12 +3,11 @@ import { check, sleep } from 'k6';
 
 export const options = {
     vus: 10, // 가상 사용자 수 (1번부터 10번까지)
-    duration: '1m', // 테스트 지속 시간
+    duration: '30s', // 테스트 지속 시간
 };
 
 export default function () {
-    const baseUrl = 'https://api.app.mm.ts0608.life';
-    // const baseUrl = 'https://localhost:8080';
+    const baseUrl = 'http://localhost:8080';
 
     // 1. 로그인 (1번부터 10번까지 바꿔가면서)
     let userId = __VU; // 가상 사용자 번호 (1부터 10까지)
