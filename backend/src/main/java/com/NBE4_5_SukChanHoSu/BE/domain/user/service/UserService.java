@@ -38,7 +38,6 @@ public class UserService {
     private final RedisTemplate<String, String> redisTemplate;
     private final AuthenticationManagerBuilder authenticationManagerBuilder;
     private final AdminMonitoringService adminMonitoringService;
-    private final EmailService emailService;
 
     public User join(UserSignUpRequest requestDto) {
         String verified = redisTemplate.opsForValue().get(EMAIL_VERIFY + requestDto.getEmail());

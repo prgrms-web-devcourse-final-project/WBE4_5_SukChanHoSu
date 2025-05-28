@@ -156,7 +156,7 @@ public class UserController {
     @PatchMapping("/non")
     @Operation(
             summary = "비밀번호 변경",
-            description = "현재 비밀번호를 확인한 후, 새 비밀번호로 변경합니다.",
+            description = "이메일 인증이 완료되면 새 비밀번호로 변경합니다.",
             responses = {
                     @ApiResponse(responseCode = "200", description = "비밀번호 변경 성공"),
                     @ApiResponse(responseCode = "400", description = "새 비밀번호와 확인 비밀번호가 일치하지 않음")
