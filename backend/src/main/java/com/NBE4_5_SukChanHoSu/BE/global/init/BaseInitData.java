@@ -82,7 +82,7 @@ public class BaseInitData {
 
         Random random = new Random();
 
-        for (int i = 1; i <= 30; i++) {
+        for (int i = 1; i <= 40; i++) {
             String newEmail = "initUser" + i + "@example.com";
             redisTemplate.opsForValue().set("emailVerify:" + newEmail, "true", 5, TimeUnit.MINUTES);
             UserSignUpRequest signUpDto = UserSignUpRequest.builder()
@@ -215,11 +215,11 @@ public class BaseInitData {
 
     @Transactional
     public void likeInit1() {
-        // 홀수 유저 ID 리스트
-        List<Long> oddUserIds = List.of(1L, 3L, 5L, 7L, 9L);
+        // 홀수 유저 ID 리스트 (11, 13, 15, 17, 19)
+        List<Long> oddUserIds = List.of(11L, 13L, 15L, 17L, 19L);
 
-        // 짝수 유저 ID 리스트 (2, 4, 6, 8, 10)
-        List<Long> evenUserIds = List.of(2L, 4L, 6L, 8L, 10L);
+        // 짝수 유저 ID 리스트 (10, 12, 14, 16, 18)
+        List<Long> evenUserIds = List.of(10L, 12L, 14L, 16L, 18L);
 
         // 홀수 유저가 짝수 유저에게 like 전송
         for (Long oddUserId : oddUserIds) {
@@ -278,13 +278,48 @@ public class BaseInitData {
 
     @Transactional
     public void likeInit2() {
-        // 짝수 유저 ID 리스트 (12, 14, 16, 18, 20)
-        List<Long> evenUserIds = Stream.iterate(12L, n -> n + 2)
-                .limit(5) // 12부터 20까지 5개의 짝수
-                .collect(Collectors.toList());
+        // 홀수 유저 ID 리스트 (11, 13, 15, 17, 19)
+        List<Long> oddUserIds = List.of(11L, 13L, 15L, 17L, 19L);
 
-        // 홀수 유저 ID 리스트 (1, 3, 5, 7, 9)
-        List<Long> oddUserIds = List.of(1L, 3L, 5L, 7L, 9L);
+        // 짝수 유저 ID 리스트 (20, 22, 24, 26, 28)
+        List<Long> evenUserIds = List.of(20L, 22L, 24L, 26L, 28L);
+
+        // 홀수 유저가 짝수 유저에게 like 전송
+        for (Long oddUserId : oddUserIds) {
+            for (Long evenUserId : evenUserIds) {
+                // 유저 프로필 조회
+                UserProfile fromUser = userProfileRepository.findById(oddUserId)
+                        .orElseThrow(() -> new RuntimeException("유저를 찾을 수 없습니다: " + oddUserId));
+                UserProfile toUser = userProfileRepository.findById(evenUserId)
+                        .orElseThrow(() -> new RuntimeException("유저를 찾을 수 없습니다: " + evenUserId));
+
+                // 이미 like를 보낸 상태인지 확인
+                if (!userLikeService.isAlreadyLikes(fromUser, toUser) && !userLikeService.isAlreadyMatched(fromUser, toUser)) {
+                    // like 전송
+                    userLikeService.likeUser(fromUser, toUser);
+                    System.out.println("유저 " + oddUserId + "가 유저 " + evenUserId + "에게 like를 전송했습니다.");
+
+                    // 매칭 상태 확인 및 처리
+                    if (userLikeService.isAlreadyLiked(fromUser, toUser)) {
+                        MatchingResponse response = userLikeService.matching(fromUser, toUser);
+                        System.out.println("매칭 완료: 유저 " + oddUserId + "와 유저 " + evenUserId);
+                    }
+                } else {
+                    System.out.println("유저 " + oddUserId + "는 이미 유저 " + evenUserId + "에게 like를 보낸 상태입니다.");
+                }
+            }
+        }
+
+        System.out.println("likeInit2 더미 데이터 생성 완료!");
+    }
+
+    @Transactional
+    public void likeInit3() {
+        // 짝수 유저 ID 리스트 (10, 12, 14, 16, 18)
+        List<Long> evenUserIds = List.of(10L, 12L, 14L, 16L, 18L);
+
+        // 홀수 유저 ID 리스트 (21, 23, 25, 27, 29)
+        List<Long> oddUserIds = List.of(21L, 23L, 25L, 27L, 29L);
 
         // 짝수 유저가 홀수 유저에게 like 전송
         for (Long evenUserId : evenUserIds) {
@@ -312,80 +347,39 @@ public class BaseInitData {
             }
         }
 
-        System.out.println("likeInit2 더미 데이터 생성 완료!");
-    }
-
-    @Transactional
-    public void likeInit3() {
-        // 홀수 유저 ID 리스트 (1, 3, 5, 7, 9)
-        List<Long> oddUserIds = List.of(1L, 3L, 5L, 7L, 9L);
-
-        // 짝수 유저 ID 리스트 (22, 24, 26, 28, 30)
-        List<Long> evenUserIds = Stream.iterate(22L, n -> n + 2)
-                .limit(5) // 22부터 30까지 5개의 짝수
-                .collect(Collectors.toList());
-
-        // 홀수 유저가 짝수 유저에게 like 전송
-        for (Long oddUserId : oddUserIds) {
-            for (Long evenUserId : evenUserIds) {
-                // 유저 프로필 조회
-                UserProfile fromUser = userProfileRepository.findById(oddUserId)
-                        .orElseThrow(() -> new RuntimeException("유저를 찾을 수 없습니다: " + oddUserId));
-                UserProfile toUser = userProfileRepository.findById(evenUserId)
-                        .orElseThrow(() -> new RuntimeException("유저를 찾을 수 없습니다: " + evenUserId));
-
-                // 이미 like를 보낸 상태인지 확인
-                if (!userLikeService.isAlreadyLikes(fromUser, toUser) && !userLikeService.isAlreadyMatched(fromUser, toUser)) {
-                    // like 전송
-                    userLikeService.likeUser(fromUser, toUser);
-                    System.out.println("유저 " + oddUserId + "가 유저 " + evenUserId + "에게 like를 전송했습니다.");
-
-                    // 매칭 상태 확인 및 처리
-                    if (userLikeService.isAlreadyLiked(fromUser, toUser)) {
-                        MatchingResponse response = userLikeService.matching(fromUser, toUser);
-                        System.out.println("매칭 완료: 유저 " + oddUserId + "와 유저 " + evenUserId);
-                    }
-                } else {
-                    System.out.println("유저 " + oddUserId + "는 이미 유저 " + evenUserId + "에게 like를 보낸 상태입니다.");
-                }
-            }
-        }
-
         System.out.println("likeInit3 더미 데이터 생성 완료!");
     }
 
     @Transactional
     public void likeInit4() {
+        // 짝수 유저 ID 리스트 (30, 32, 34, 36, 38)
+        List<Long> evenUserIds = List.of(30L, 32L, 34L, 36L, 38L);
+
         // 홀수 유저 ID 리스트 (11, 13, 15, 17, 19)
-        List<Long> oddUserIds = Stream.iterate(11L, n -> n + 2)
-                .limit(5) // 11부터 19까지 5개의 홀수
-                .collect(Collectors.toList());
+        List<Long> oddUserIds = List.of(11L, 13L, 15L, 17L, 19L);
 
-        // 짝수 유저 ID 리스트 (2, 4, 6, 8, 10)
-        List<Long> evenUserIds = List.of(2L, 4L, 6L, 8L, 10L);
-
-        // 홀수 유저가 짝수 유저에게 like 전송
-        for (Long oddUserId : oddUserIds) {
-            for (Long evenUserId : evenUserIds) {
+        // 짝수 유저가 홀수 유저에게 like 전송
+        for (Long evenUserId : evenUserIds) {
+            for (Long oddUserId : oddUserIds) {
                 // 유저 프로필 조회
-                UserProfile fromUser = userProfileRepository.findById(oddUserId)
-                        .orElseThrow(() -> new RuntimeException("유저를 찾을 수 없습니다: " + oddUserId));
-                UserProfile toUser = userProfileRepository.findById(evenUserId)
+                UserProfile fromUser = userProfileRepository.findById(evenUserId)
                         .orElseThrow(() -> new RuntimeException("유저를 찾을 수 없습니다: " + evenUserId));
+                UserProfile toUser = userProfileRepository.findById(oddUserId)
+                        .orElseThrow(() -> new RuntimeException("유저를 찾을 수 없습니다: " + oddUserId));
 
                 // 이미 like를 보낸 상태인지 확인
                 if (!userLikeService.isAlreadyLikes(fromUser, toUser) && !userLikeService.isAlreadyMatched(fromUser, toUser)) {
                     // like 전송
                     userLikeService.likeUser(fromUser, toUser);
-                    System.out.println("유저 " + oddUserId + "가 유저 " + evenUserId + "에게 like를 전송했습니다.");
+                    System.out.println("유저 " + evenUserId + "가 유저 " + oddUserId + "에게 like를 전송했습니다.");
 
                     // 매칭 상태 확인 및 처리
                     if (userLikeService.isAlreadyLiked(fromUser, toUser)) {
                         MatchingResponse response = userLikeService.matching(fromUser, toUser);
-                        System.out.println("매칭 완료: 유저 " + oddUserId + "와 유저 " + evenUserId);
+                        System.out.println("매칭 완료: 유저 " + evenUserId + "와 유저 " + oddUserId);
                     }
                 } else {
-                    System.out.println("유저 " + oddUserId + "는 이미 유저 " + evenUserId + "에게 like를 보낸 상태입니다.");
+                    System.out.println("유저 " + evenUserId + "는 이미 유저 " + oddUserId + "에게 like를 보낸 상태입니다.");
                 }
             }
         }
@@ -395,13 +389,11 @@ public class BaseInitData {
 
     @Transactional
     public void likeInit5() {
-        // 홀수 유저 ID 리스트 (1, 3, 5, 7, 9)
-        List<Long> oddUserIds = List.of(2L, 4L, 6L, 8L, 10L);
+        // 홀수 유저 ID 리스트 (31, 33, 35, 37, 39)
+        List<Long> oddUserIds = List.of(31L, 33L, 35L, 37L, 39L);
 
-        // 짝수 유저 ID 리스트 (22, 24, 26, 28, 30)
-        List<Long> evenUserIds = Stream.iterate(21L, n -> n + 2)
-                .limit(5) // 22부터 30까지 5개의 짝수
-                .collect(Collectors.toList());
+        // 짝수 유저 ID 리스트 (10, 12, 14, 16, 18)
+        List<Long> evenUserIds = List.of(10L, 12L, 14L, 16L, 18L);
 
         // 홀수 유저가 짝수 유저에게 like 전송
         for (Long oddUserId : oddUserIds) {
@@ -429,7 +421,7 @@ public class BaseInitData {
             }
         }
 
-        System.out.println("likeInit3 더미 데이터 생성 완료!");
+        System.out.println("likeInit5 더미 데이터 생성 완료!");
     }
 
 }
