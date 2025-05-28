@@ -87,12 +87,12 @@ class NoticeControllerTest {
     @BeforeEach
     void setUp() {
         objectMapper = new ObjectMapper();
-        login();
+        login8();
     }
     @DisplayName("로그인")
-    void login() {
+    void login8() {
         // given
-        String email = "initUser1@example.com";
+        String email = "initUser8@example.com";
         String rawPassword = "testPassword123!";
 
         // 로그인
@@ -106,9 +106,9 @@ class NoticeControllerTest {
     }
 
     @DisplayName("로그인2")
-    void login2() {
+    void login5() {
         // given
-        String email = "initUser2@example.com";
+        String email = "initUser5@example.com";
         String rawPassword = "testPassword123!";
 
         // 로그인
@@ -164,8 +164,8 @@ class NoticeControllerTest {
     @DisplayName("알림 목록 조회")
     void getNotifications() throws Exception {
         // Given
-        setUpLike(2L);  // 1->2
-        login2();
+        setUpLike(5L);  // 1->2
+        login5();
 
         // When
         ResultActions action = mvc.perform(get("/api/notice")
@@ -178,14 +178,14 @@ class NoticeControllerTest {
                 .andExpect(jsonPath("$.code").value("200"))
                 .andExpect(jsonPath("$.message",containsString("알림")))
                 .andExpect(jsonPath("$.data[*].timeAgo", everyItem(containsString("전"))))
-                .andExpect(jsonPath("$.data[*].message",hasItem(containsString("TempUser1"))));
+                .andExpect(jsonPath("$.data[*].message",hasItem(containsString("TempUser8"))));
     }
 
     @Test
     void markAsRead() throws Exception {
         // Given
-        setUpLike(2L);  // 좋아요
-        login2();   // 2번 계정으로 로그인
+        setUpLike(5L);  // 좋아요
+        login5();   // 2번 계정으로 로그인
         mvc.perform(get("/api/notice/count")
                     .contentType(MediaType.APPLICATION_JSON)
                     .header("Authorization", "Bearer " + accessToken))
@@ -223,18 +223,25 @@ class NoticeControllerTest {
         String responseBody1 = action1.andReturn().getResponse().getContentAsString();
         JSONObject jsonResponse1 = new JSONObject(responseBody1);
         int prevData = jsonResponse1.getInt("data");    // 응답 갯수
+        System.out.println("prevData: " + prevData);
 
-        login2();   // 2번 계정으로 로그인 후
-        setUpLike(1L);  // 좋아요
-        login();    // 다시 1번 계정으로 로그인
+        login5();   // 2번 계정으로 로그인 후
+        setUpLike(8L);  // 좋아요
+        login8();    // 다시 1번 계정으로 로그인
 
         // Then
-        mvc.perform(get("/api/notice/count")
+        ResultActions action2 =mvc.perform(get("/api/notice/count")
                     .contentType(MediaType.APPLICATION_JSON)
                     .header("Authorization", "Bearer " + accessToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.code").value("200"))
                 .andExpect(jsonPath("$.message",containsString("미확인 알림 갯수")));
+//                .andExpect(jsonPath("$.data").value(prevData+1));   // 이전 값보다 1큼
+
+        String responseBody2 = action2.andReturn().getResponse().getContentAsString();
+        JSONObject jsonResponse2 = new JSONObject(responseBody2);
+        int newData = jsonResponse2.getInt("data");    // 응답 갯수
+        System.out.println("newData: " + newData);
 
     }
 }
