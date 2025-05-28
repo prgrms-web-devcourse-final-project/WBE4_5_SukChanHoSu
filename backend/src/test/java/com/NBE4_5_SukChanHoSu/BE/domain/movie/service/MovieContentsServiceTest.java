@@ -22,12 +22,12 @@ public class MovieContentsServiceTest {
     @Mock
     private MovieRepository movieRepository;
     private MovieContentsService movieService;
-    @Mock
-    private MovieElasticsearchRepository movieElasticsearchRepository;
+//    @Mock
+//    private MovieElasticsearchRepository movieElasticsearchRepository;
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
-        movieService = new MovieContentsService(movieRepository,movieElasticsearchRepository);
+//        movieService = new MovieContentsService(movieRepository,movieElasticsearchRepository);
     }
 
     @Test

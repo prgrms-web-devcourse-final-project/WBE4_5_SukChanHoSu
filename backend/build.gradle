@@ -77,8 +77,8 @@ dependencies {
     //actuator
     implementation("org.springframework.boot:spring-boot-starter-actuator:3.4.5")
 
-    //elasticsearch
-    implementation 'org.springframework.boot:spring-boot-starter-data-elasticsearch'
+//    //elasticsearch
+//    implementation 'org.springframework.boot:spring-boot-starter-data-elasticsearch'
 
     tasks.named('test') {
         useJUnitPlatform()

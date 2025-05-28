@@ -20,27 +20,28 @@ import java.util.stream.Collectors;
 public class MovieContentsService {
 
     private final MovieRepository movieRepository;
-    private final MovieElasticsearchRepository movieElasticsearchRepository;
-
-    // Movie → MovieDocument 변환 헬퍼
-    private MovieDocument toMovieDocument(Movie movie) {
-        String genresRaw = movie.getGenres().stream()
-                .map(Genre::getLabel)
-                .collect(Collectors.joining(", "));  // 예: "Action, Drama, Comedy"
-
-        return MovieDocument.builder()
-                .movieId(movie.getMovieId())
-                .title(movie.getTitle())
-                .genresRaw(genresRaw)
-                .description(movie.getDescription())
-                .director(movie.getDirector())
-                .build();
-    }
+//    private final MovieElasticsearchRepository movieElasticsearchRepository;
+//
+//    // Movie → MovieDocument 변환 헬퍼
+//    private MovieDocument toMovieDocument(Movie movie) {
+//        String genresRaw = movie.getGenres().stream()
+//                .map(Genre::getLabel)
+//                .collect(Collectors.joining(", "));  // 예: "Action, Drama, Comedy"
+//
+//        return MovieDocument.builder()
+//                .movieId(movie.getMovieId())
+//                .title(movie.getTitle())
+//                .genresRaw(genresRaw)
+//                .description(movie.getDescription())
+//                .director(movie.getDirector())
+//                .build();
+//    }
 
     public Movie save(Movie movie) {
-        Movie savedMovie = movieRepository.save(movie);
-        movieElasticsearchRepository.save(toMovieDocument(savedMovie));
-        return savedMovie;
+//        Movie savedMovie = movieRepository.save(movie);
+//        movieElasticsearchRepository.save(toMovieDocument(savedMovie));
+//        return savedMovie;
+        return movieRepository.save(movie);
     }
 
     public List<Movie> findAll() {
@@ -76,35 +77,36 @@ public class MovieContentsService {
         movie.setRating(updatedMovie.getRating());
         movie.setDirector(updatedMovie.getDirector());
 
-        Movie saved = movieRepository.save(movie);
-        movieElasticsearchRepository.save(toMovieDocument(saved)); // Elasticsearch 동기화
-        return saved;
+        return movieRepository.save(movie);
+//        Movie saved = movieRepository.save(movie);
+//        movieElasticsearchRepository.save(toMovieDocument(saved)); // Elasticsearch 동기화
+//        return saved;
     }
 
     @Transactional
     public void delete(Long movieId) {
         movieRepository.deleteById(movieId);
-        movieElasticsearchRepository.deleteById(movieId); // Elasticsearch에서도 삭제
+//        movieElasticsearchRepository.deleteById(movieId); // Elasticsearch에서도 삭제
     }
 
-    // Elasticsearch: 자동완성
-    public List<String> autocompleteTitleFromEs(String query) {
-        return movieElasticsearchRepository.findByTitleStartingWith(query)
-                .stream()
-                .map(MovieDocument::getTitle)
-                .collect(Collectors.toList());
-    }
+//    // Elasticsearch: 자동완성
+//    public List<String> autocompleteTitleFromEs(String query) {
+//        return movieElasticsearchRepository.findByTitleStartingWith(query)
+//                .stream()
+//                .map(MovieDocument::getTitle)
+//                .collect(Collectors.toList());
+//    }
 
-    private Movie toMovieEntity(MovieDocument document) {
-        List<Genre> genres = Genre.parseGenres(document.getGenresRaw());
-
-        return Movie.builder()
-                .movieId(document.getMovieId())
-                .title(document.getTitle())
-                .genres(genres)
-                .description(document.getDescription())
-                .director(document.getDirector())
-                .build();
-    }
+//    private Movie toMovieEntity(MovieDocument document) {
+//        List<Genre> genres = Genre.parseGenres(document.getGenresRaw());
+//
+//        return Movie.builder()
+//                .movieId(document.getMovieId())
+//                .title(document.getTitle())
+//                .genres(genres)
+//                .description(document.getDescription())
+//                .director(document.getDirector())
+//                .build();
+//    }
 
 }
