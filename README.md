@@ -4,6 +4,7 @@
 프로그래머스 백엔드 데브코스 4기 5회차 6팀 최종 프로젝트 입니다.
 
 
+
 ## 📌 프로젝트 개요
 
 🎬 **MovieMatch**  
@@ -40,19 +41,23 @@
 ![MySQL](https://img.shields.io/badge/MySQL-4479A1?style=for-the-badge&logo=mysql&logoColor=white)
 ![Redis](https://img.shields.io/badge/Redis-DC382D?style=for-the-badge&logo=redis&logoColor=white)
 ![H2](https://img.shields.io/badge/H2-00599C?style=for-the-badge&logo=h2&logoColor=white)
-![Elasticsearch](https://img.shields.io/badge/Elasticsearch-005571?style=for-the-badge&logo=elasticsearch&logoColor=white) 
 
 ### 🛠 Development Tools
 ![IntelliJ IDEA](https://img.shields.io/badge/IntelliJIDEA-000000?style=for-the-badge&logo=intellijidea&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)
-![NGINX](https://img.shields.io/badge/Nginx-009639?style=for-the-badge&logo=nginx&logoColor=white)
-![Amazon S3](https://img.shields.io/badge/AmazonS3-569A31?style=for-the-badge&logo=amazons3&logoColor=white)
-![AWS ECS](https://img.shields.io/badge/AWS%20ECS-FF9900?style=for-the-badge&logo=amazonaws&logoColor=white)
 ![k6](https://img.shields.io/badge/k6-8A33A8?style=for-the-badge&logo=k6&logoColor=white) 
 ![GitHub Actions](https://img.shields.io/badge/GitHub%20Actions-2088FF?style=for-the-badge&logo=githubactions&logoColor=white)
+![Terraform](https://img.shields.io/badge/Terraform-623CE4?style=for-the-badge&logo=terraform&logoColor=white)
+![npm](https://img.shields.io/badge/npm-CB3837?style=for-the-badge&logo=npm&logoColor=white)
+
+### ☁️ Infrastructure & Deployment
+![Amazon S3](https://img.shields.io/badge/AmazonS3-569A31?style=for-the-badge&logo=amazons3&logoColor=white)
+![Amazon EC2](https://img.shields.io/badge/AmazonEC2-FF9900?style=for-the-badge&logo=amazonec2&logoColor=white)
+![HAProxy](https://img.shields.io/badge/HAProxy-000000?style=for-the-badge&logo=haproxy&logoColor=white)
 
 ### 📊 Monitoring & Logging Tools
-![Prometheus](https://img.shields.io/badge/Prometheus-E6522C?style=for-the-badge&logo=prometheus&logoColor=white) ![Grafana](https://img.shields.io/badge/Grafana-F46800?style=for-the-badge&logo=grafana&logoColor=white) ![Kibana](https://img.shields.io/badge/Kibana-005571?style=for-the-badge&logo=kibana&logoColor=white) 
+![Prometheus](https://img.shields.io/badge/Prometheus-E6522C?style=for-the-badge&logo=prometheus&logoColor=white) 
+![Grafana](https://img.shields.io/badge/Grafana-F46800?style=for-the-badge&logo=grafana&logoColor=white) 
 
 ### 🔧 Collaboration Tools
 ![GitHub](https://img.shields.io/badge/GitHub-181717?style=for-the-badge&logo=github&logoColor=white)
@@ -66,7 +71,8 @@
 ## 🗂 ERD
 
 [🔗 ERDCloud에서 보기](https://www.erdcloud.com/d/f2MNvDscH7p8mRwSg)  
-![image](https://github.com/user-attachments/assets/e11a5cb4-5edc-489d-9855-36a944c1ff2d)
+![image](https://github.com/user-attachments/assets/b1787204-e2d5-4cde-9504-e5abab84abe4)
+
 
 
 ---
@@ -83,4 +89,5 @@
 
 ### 🛠 Git 컨벤션
 [🔗 Notion 링크](https://www.notion.so/1d53550b7b55800fb911e64eff5e8273?p=1db3550b7b5581bfae42c5b731455fbe&pm=s)
+
 
