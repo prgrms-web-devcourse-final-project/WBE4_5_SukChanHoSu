@@ -28,6 +28,7 @@ public class MovieContentsServiceTest {
     void setUp() {
         MockitoAnnotations.openMocks(this);
 //        movieService = new MovieContentsService(movieRepository,movieElasticsearchRepository);
+        movieService = new MovieContentsService(movieRepository);
     }
 
     @Test
