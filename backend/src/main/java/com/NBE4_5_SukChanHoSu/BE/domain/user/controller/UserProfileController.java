@@ -113,4 +113,12 @@ public class UserProfileController {
         return new RsData<>("200", "수정된 범위: "+ updatedRadius, response);
     }
 
+    @Operation(summary = "프로필 조회", description = "다른 유저의 프로필 정보 조회")
+    @GetMapping("/detail")
+    //todo 임시, 이후 삭제
+    public RsData<ProfileResponse> getProfile(@RequestParam Long id) {
+        ProfileResponse response = userProfileService.getMyProfile(id);
+        return new RsData<>("200", "프로필 조회 성공", response);
+    }
+
 }
