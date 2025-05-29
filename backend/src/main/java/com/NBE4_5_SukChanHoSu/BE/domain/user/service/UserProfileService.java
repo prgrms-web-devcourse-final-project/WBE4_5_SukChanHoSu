@@ -172,4 +172,12 @@ public class UserProfileService {
         UserProfile savedUserProfile = userProfileRepository.save(userProfile); // 변경된 프로필 정보 저장
         return new ProfileResponse(savedUserProfile); // 업데이트된 프로필 정보 반환
     }
+
+    public ProfileResponse getProfileByUserId(Long userId) {
+        UserProfile profile = userProfileRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("사용자를 찾을 수 없습니다."));
+
+        return new ProfileResponse(profile);
+    }
+
 }

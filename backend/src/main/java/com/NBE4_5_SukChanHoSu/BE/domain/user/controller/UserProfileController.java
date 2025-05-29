@@ -87,6 +87,14 @@ public class UserProfileController {
         return new RsData<>("200", "닉네임 중복 검사 성공", new NicknameCheckResponse(nickname, duplicated));
     }
 
+    @Operation(summary = "상대 프로필 조회", description = "상대방 유저의 userId를 기반으로 프로필 상세 정보를 조회합니다.")
+    @GetMapping("/{userId}")
+    public RsData<ProfileResponse> getOtherUserProfile(@PathVariable Long userId) {
+        ProfileResponse response = userProfileService.getProfileByUserId(userId);
+        return new RsData<>("200", "상대 프로필 조회 성공", response);
+    }
+
+
     @Operation(summary = "프로필로 유저 객체 조회", description = "프로필 엔티티를 이용하여 유저 정보 가져오는지 확인")
     @GetMapping("/user")
     public RsData<User> getUser() {
