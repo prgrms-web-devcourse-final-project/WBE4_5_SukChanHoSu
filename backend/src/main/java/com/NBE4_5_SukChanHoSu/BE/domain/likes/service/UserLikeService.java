@@ -84,11 +84,30 @@ public class UserLikeService {
 
     // to -> from 관계도 존재하는지 확인
     public boolean isAlreadyLiked(UserProfile fromUser, UserProfile toUser) {
+        // Redis에서 "like" 상태 확인
+        String key = "likes:" + toUser.getUserId() + ":" + fromUser.getUserId();
+
+        // Redis에 "like" 상태가 있는지 확인
+        if (Boolean.TRUE.equals(redisTemplate.hasKey(key))) {
+            return true;
+        }
+
+
         return userLikesRepository.existsByFromUserAndToUser(toUser, fromUser);
     }
 
     // 이미 좋아요한 상황인지 검증
     public boolean isAlreadyLikes(UserProfile fromUser, UserProfile toUser) {
+        // Redis에서 "like" 상태 확인
+        String key = "likes:" + fromUser.getUserId() + ":" + toUser.getUserId();
+
+        // Redis에 "like" 상태가 있는지 확인
+        if (Boolean.TRUE.equals(redisTemplate.hasKey(key))) {
+            return true;
+        }
+
+
+
         return userLikesRepository.existsByFromUserAndToUser(fromUser, toUser);
     }
 
@@ -316,6 +335,18 @@ public class UserLikeService {
 
     // 매칭테이블에 이미 있는지 검증
     public boolean isAlreadyMatched(UserProfile fromUser, UserProfile toUser) {
+        String key;
+        if (isMale(fromUser)) {
+            key = "matching:" + fromUser.getUserId() + ":" + toUser.getUserId();
+        } else {
+            key = "matching:" + toUser.getUserId() + ":" + fromUser.getUserId();
+        }
+
+        // Redis에 매칭 상태가 있는지 확인
+        if (Boolean.TRUE.equals(redisTemplate.hasKey(key))) {
+            return true;
+        }
+
         if(isMale(fromUser)){
             return matchingRepository.existsByMaleUserAndFemaleUser(fromUser,toUser);
         }else{
