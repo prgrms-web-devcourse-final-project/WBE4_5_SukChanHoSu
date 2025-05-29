@@ -61,6 +61,9 @@ public class UserLikeControllerTest {
 
     @BeforeEach
     void setUp() {
+        clearRedisData(); // 레디스 데이터 초기화
+        ClearStream(LIKE_STREAM);   // 스트림 초기화
+        ClearStream(MATCHING_STREAM);
         objectMapper = new ObjectMapper();
         login();
     }
