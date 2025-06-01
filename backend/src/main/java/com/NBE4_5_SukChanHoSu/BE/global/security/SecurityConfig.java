@@ -42,9 +42,7 @@ public class SecurityConfig {
                                         "/api/auth/google/url",
                                         "/api/email/**",
                                         "/api/monitoring/health",
-                                        "/actuator/**",
-                                        "/api/movie/paged",
-                                        "/api/profile/check-nickname"
+                                        "/actuator/**"
                                 ).permitAll()
                                 .requestMatchers(HttpMethod.POST, "/api/profile/info").permitAll()
                                 .requestMatchers(HttpMethod.POST, "/api/profile/images").permitAll()
