@@ -1,5 +1,6 @@
 package com.NBE4_5_SukChanHoSu.BE.domain.movie.review.repository;
 
+import com.NBE4_5_SukChanHoSu.BE.domain.movie.entity.Movie;
 import com.NBE4_5_SukChanHoSu.BE.domain.movie.review.entity.Review;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -19,4 +20,10 @@ public interface ReviewRepository extends JpaRepository<Review, Long> {
     List<Review> findByMovie_MovieIdOrderByLikeCountDescCreatedDateDesc(Long movieId);
 
     List<Review> findAllByMovie_MovieId(Long movieId);
+
+    @Query("SELECT DISTINCT r.movie FROM Review r")
+    List<Movie> findDistinctMovies();
+
+    @Query("SELECT r FROM Review r JOIN FETCH r.movie")
+    List<Review> findAllWithMovie();
 }

@@ -7,6 +7,7 @@ import com.NBE4_5_SukChanHoSu.BE.domain.likes.entity.Matching;
 import com.NBE4_5_SukChanHoSu.BE.domain.likes.entity.UserLikes;
 import com.NBE4_5_SukChanHoSu.BE.domain.likes.repository.MatchingRepository;
 import com.NBE4_5_SukChanHoSu.BE.domain.likes.repository.UserLikesRepository;
+import com.NBE4_5_SukChanHoSu.BE.domain.recommend.service.CalculateDistance;
 import com.NBE4_5_SukChanHoSu.BE.domain.recommend.service.RecommendService;
 import com.NBE4_5_SukChanHoSu.BE.domain.user.dto.response.UserProfileResponse;
 import com.NBE4_5_SukChanHoSu.BE.domain.user.entity.Gender;
@@ -43,6 +44,7 @@ public class UserLikeService {
     private final RedisTTL ttl;
     private final RecommendService matchingService;
     private final ObjectMapper objectMapper;
+    private final CalculateDistance calculateDistance;
 
     private static final String LIKE_STREAM = "like";
     private static final String MATCHING_STREAM = "matching";
@@ -82,11 +84,30 @@ public class UserLikeService {
 
     // to -> from 관계도 존재하는지 확인
     public boolean isAlreadyLiked(UserProfile fromUser, UserProfile toUser) {
+        // Redis에서 "like" 상태 확인
+        String key = "likes:" + toUser.getUserId() + ":" + fromUser.getUserId();
+
+        // Redis에 "like" 상태가 있는지 확인
+        if (Boolean.TRUE.equals(redisTemplate.hasKey(key))) {
+            return true;
+        }
+
+
         return userLikesRepository.existsByFromUserAndToUser(toUser, fromUser);
     }
 
     // 이미 좋아요한 상황인지 검증
     public boolean isAlreadyLikes(UserProfile fromUser, UserProfile toUser) {
+        // Redis에서 "like" 상태 확인
+        String key = "likes:" + fromUser.getUserId() + ":" + toUser.getUserId();
+
+        // Redis에 "like" 상태가 있는지 확인
+        if (Boolean.TRUE.equals(redisTemplate.hasKey(key))) {
+            return true;
+        }
+
+
+
         return userLikesRepository.existsByFromUserAndToUser(fromUser, toUser);
     }
 
@@ -138,7 +159,7 @@ public class UserLikeService {
         cancelLikes(toUser, fromUser);
 
         // 응답 생성
-        int distance = matchingService.calDistance(fromUser, toUser);
+        int distance = calculateDistance.calDistance(fromUser, toUser);
         return new MatchingResponse(matching, distance);
     }
 
@@ -157,7 +178,7 @@ public class UserLikeService {
                     Map<String, Object> map = (Map<String, Object>) value;  // Map(키-값 쌍)으로 캐스팅
                     try {
                         UserLikes like = objectMapper.convertValue(map, UserLikes.class); // Map -> UserLikes 클래스로 변환
-                        int radius = matchingService.calDistance(like.getFromUser(), like.getToUser());  // 거리 계산
+                        int radius = calculateDistance.calDistance(like.getFromUser(), like.getToUser());  // 거리 계산
                         likesUsers.add(new UserProfileResponse(like.getToUser(), radius, like.getCreatedAt()));  // 메모리에 추가
                     } catch (IllegalArgumentException e) {
                         throw new RedisSerializationException("500", "JSON 역직렬화 실패");
@@ -169,7 +190,7 @@ public class UserLikeService {
                 UserProfile likedUser = like.getToUser();   // 좋아요를 받은 사용자
                 if (likedUser != null) {
                     // 내가 좋아요 한 사용자 리스트에 추가
-                    int radius = matchingService.calDistance(like.getFromUser(), like.getToUser());  // 거리 계산
+                    int radius = calculateDistance.calDistance(like.getFromUser(), like.getToUser());  // 거리 계산
                     likesUsers.add(new UserProfileResponse(likedUser, radius, like.getCreatedAt()));  // 메모리에 추가
                     // 캐싱
                     String key = "likes:" + user.getUserId() + ":" + likedUser.getUserId();
@@ -199,7 +220,7 @@ public class UserLikeService {
                     Map<String, Object> map = (Map<String, Object>) value;
                     try {
                         UserLikes like = objectMapper.convertValue(map, UserLikes.class);
-                        int distance = matchingService.calDistance(like.getFromUser(), like.getToUser());    // 거리 계산
+                        int distance = calculateDistance.calDistance(like.getFromUser(), like.getToUser());    // 거리 계산
                         likedUsers.add(new UserProfileResponse(like.getFromUser(), distance,like.getCreatedAt()));
                     } catch (IllegalArgumentException e) {
                         throw new RedisSerializationException("500", "JSON 역직렬화 실패");
@@ -211,7 +232,7 @@ public class UserLikeService {
                 UserProfile likesUser = like.getFromUser(); // 좋아요를 보낸 사용자
                 if (likesUser != null) {
                     // 나를 좋아요한 사용자 리스트에 추가
-                    int distance = matchingService.calDistance(user, likesUser);    // 거리 계산
+                    int distance = calculateDistance.calDistance(user, likesUser);    // 거리 계산
                     likedUsers.add(new UserProfileResponse(likesUser, distance,like.getCreatedAt()));
 
                     // 캐싱
@@ -246,7 +267,7 @@ public class UserLikeService {
                         try {
                             Matching matching = objectMapper.convertValue(map, Matching.class);
                             System.out.println("추출한 유저: " + matching.getFemaleUser());
-                            int distance = matchingService.calDistance(user, matching.getFemaleUser());
+                            int distance = calculateDistance.calDistance(user, matching.getFemaleUser());
                             responses.add(new UserProfileResponse(matching.getFemaleUser(), distance, matching.getCreatedAt()));
                         } catch (IllegalArgumentException e) {
                             throw new RedisSerializationException("500", "JSON 역직렬화 실패"+e.getMessage());
@@ -258,7 +279,7 @@ public class UserLikeService {
                 List<Matching> matches = matchingRepository.findByMaleUser(user);
                 for (Matching matching : matches) {
                     // 매칭된 여자 유저 리스트에 등록
-                    int distance = matchingService.calDistance(user, matching.getFemaleUser());
+                    int distance = calculateDistance.calDistance(user, matching.getFemaleUser());
                     responses.add(new UserProfileResponse(matching.getFemaleUser(), distance, matching.getCreatedAt()));
 
                     // 캐싱
@@ -280,7 +301,7 @@ public class UserLikeService {
                         Map<String, Object> map = (Map<String, Object>) value;
                         try {
                             Matching matching = objectMapper.convertValue(map, Matching.class);
-                            int distance = matchingService.calDistance(user, matching.getMaleUser());
+                            int distance = calculateDistance.calDistance(user, matching.getMaleUser());
                             responses.add(new UserProfileResponse(matching.getMaleUser(), distance, matching.getCreatedAt()));
                             System.out.println("추출한 유저: " + matching.getMaleUser());
                         } catch (IllegalArgumentException e) {
@@ -293,7 +314,7 @@ public class UserLikeService {
                 List<Matching> matches = matchingRepository.findByFemaleUser(user);
                 for (Matching matching : matches) {
                     // 매칭된 남자 유저 리스트에 등록
-                    int distance = matchingService.calDistance(user, matching.getMaleUser());
+                    int distance = calculateDistance.calDistance(user, matching.getMaleUser());
                     responses.add(new UserProfileResponse(matching.getMaleUser(), distance, matching.getCreatedAt()));
 
                     // 캐싱
@@ -314,6 +335,18 @@ public class UserLikeService {
 
     // 매칭테이블에 이미 있는지 검증
     public boolean isAlreadyMatched(UserProfile fromUser, UserProfile toUser) {
+        String key;
+        if (isMale(fromUser)) {
+            key = "matching:" + fromUser.getUserId() + ":" + toUser.getUserId();
+        } else {
+            key = "matching:" + toUser.getUserId() + ":" + fromUser.getUserId();
+        }
+
+        // Redis에 매칭 상태가 있는지 확인
+        if (Boolean.TRUE.equals(redisTemplate.hasKey(key))) {
+            return true;
+        }
+
         if(isMale(fromUser)){
             return matchingRepository.existsByMaleUserAndFemaleUser(fromUser,toUser);
         }else{

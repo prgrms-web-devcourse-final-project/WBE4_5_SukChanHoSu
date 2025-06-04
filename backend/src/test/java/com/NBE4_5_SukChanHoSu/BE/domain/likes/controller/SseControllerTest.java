@@ -16,10 +16,11 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
+import java.util.concurrent.TimeUnit;
+
 import static org.junit.jupiter.api.Assertions.*;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
@@ -137,6 +138,83 @@ class SseControllerTest {
 
         // Then
         assertFalse(sseController.getEmitters().containsKey(userId));
+    }
 
+    @Test
+    @DisplayName("매칭 알림 테스트")
+    void testLikeAndNotification() throws Exception {
+        // 1. 홀수 유저(1, 3, 5, 7, 9)가 4번 유저에게 like를 보냄
+        int[] oddUserIds = {1, 3, 5, 7, 9};
+        for (int userId : oddUserIds) {
+            // 홀수 유저 로그인
+            UserLoginRequest loginDto = new UserLoginRequest();
+            loginDto.setEmail("initUser" + userId + "@example.com");
+            loginDto.setPassword("testPassword123!");
+            LoginResponse tokenDto = userService.login(loginDto);
+            String oddUserAccessToken = tokenDto.getAccessToken();
+
+            // 4번 유저에게 like 보내기
+            mvc.perform(post("/api/users/like")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .header("Authorization", "Bearer " + oddUserAccessToken)
+                            .param("toUserId", "4"))
+                    .andDo(print())
+                    .andExpect(status().isOk());
+        }
+
+        // 2. 4번 유저가 홀수 유저(1, 3, 5, 7, 9)에게 like를 보냄
+        // 4번 유저 로그인
+        UserLoginRequest loginDto = new UserLoginRequest();
+        loginDto.setEmail("initUser4@example.com");
+        loginDto.setPassword("testPassword123!");
+        LoginResponse tokenDto = userService.login(loginDto);
+        String user4AccessToken = tokenDto.getAccessToken();
+
+        for (int userId : oddUserIds) {
+            // 홀수 유저에게 like 보내기
+            mvc.perform(post("/api/users/like")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .header("Authorization", "Bearer " + user4AccessToken)
+                            .param("toUserId", String.valueOf(userId)))
+                    .andDo(print())
+                    .andExpect(status().isOk());
+
+            // 약간의 시간차 추가 (1초)
+            TimeUnit.SECONDS.sleep(1);
+        }
+
+        // 3. SSE 알림 확인
+        // 4번 유저의 SSE 연결 생성
+        mvc.perform(get("/api/sse")
+                        .header("Authorization", "Bearer " + user4AccessToken)
+                        .accept(MediaType.TEXT_EVENT_STREAM_VALUE))
+                .andDo(print())
+                .andExpect(status().isOk());
+
+        // 홀수 유저의 SSE 연결 생성
+        for (int userId : oddUserIds) {
+            // 홀수 유저 로그인
+            UserLoginRequest oddUserLoginDto = new UserLoginRequest();
+            oddUserLoginDto.setEmail("initUser" + userId + "@example.com");
+            oddUserLoginDto.setPassword("testPassword123!");
+            LoginResponse oddUserTokenDto = userService.login(oddUserLoginDto);
+            String oddUserAccessToken = oddUserTokenDto.getAccessToken();
+
+            // SSE 연결 생성
+            mvc.perform(get("/api/sse")
+                            .header("Authorization", "Bearer " + oddUserAccessToken)
+                            .accept(MediaType.TEXT_EVENT_STREAM_VALUE))
+                    .andDo(print())
+                    .andExpect(status().isOk());
+        }
+
+        // 4. 알림 전송 확인
+        // 4번 유저에게 온 알림 확인
+        assertTrue(sseController.getEmitters().containsKey(4L));
+
+        // 홀수 유저에게 온 알림 확인
+        for (int userId : oddUserIds) {
+            assertTrue(sseController.getEmitters().containsKey((long) userId));
+        }
     }
 }

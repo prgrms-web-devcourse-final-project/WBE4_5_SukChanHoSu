@@ -1,10 +1,10 @@
 package com.NBE4_5_SukChanHoSu.BE.domain.likes.controller;
 
 import com.NBE4_5_SukChanHoSu.BE.domain.likes.entity.NotificationEvent;
-import com.NBE4_5_SukChanHoSu.BE.global.util.SecurityUtil;
+import com.NBE4_5_SukChanHoSu.BE.domain.user.service.Ut;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.annotation.PreDestroy;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.context.event.EventListener;
@@ -20,10 +20,12 @@ import java.util.concurrent.ConcurrentHashMap;
 @RestController
 @RequestMapping("/api/sse")
 @Tag(name = "SSE", description = "이벤트 전송")
+@RequiredArgsConstructor
 public class SseController {
 
     private final Map<Long, SseEmitter> emitters = new ConcurrentHashMap<>();
     private static final Logger logger = LoggerFactory.getLogger(SseController.class);
+    private final Ut ut;
 
     // 애플리케이션 종료시 SSE 연결 해제
     public void destroy() {
@@ -49,7 +51,7 @@ public class SseController {
     @GetMapping(produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     @Operation(summary = "SSE 연결 생성", description = "타임 아웃 x")
     public SseEmitter createConnection() {
-        Long userId = SecurityUtil.getCurrentUser().getId();
+        Long userId = ut.getUserProfileByContextHolder().getUserId();
 
         // todo: 리소스 낭비가 심한거같은데 개선방안 고민
         SseEmitter emitter = new SseEmitter(-1L);

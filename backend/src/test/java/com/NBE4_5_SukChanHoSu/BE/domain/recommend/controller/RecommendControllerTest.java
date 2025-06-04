@@ -1,5 +1,6 @@
 package com.NBE4_5_SukChanHoSu.BE.domain.recommend.controller;
 
+import com.NBE4_5_SukChanHoSu.BE.domain.user.service.Ut;
 import com.NBE4_5_SukChanHoSu.BE.domain.user.dto.request.UserLoginRequest;
 import com.NBE4_5_SukChanHoSu.BE.domain.user.dto.response.LoginResponse;
 import com.NBE4_5_SukChanHoSu.BE.domain.user.entity.UserProfile;
@@ -15,7 +16,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.ResultActions;
 
@@ -46,6 +46,9 @@ class RecommendControllerTest {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private Ut ut;
 
     @Autowired
     private RedisTemplate<String, Object> redisTemplate;
@@ -89,7 +92,7 @@ class RecommendControllerTest {
     @DisplayName("추천 - 거리")
     void getUserWithinRadius() throws Exception {
         //given
-        UserProfile profile = matchingService.findUser(1L);
+        UserProfile profile = ut.findUser(1L);
         int radius = profile.getSearchRadius();
 
         //when

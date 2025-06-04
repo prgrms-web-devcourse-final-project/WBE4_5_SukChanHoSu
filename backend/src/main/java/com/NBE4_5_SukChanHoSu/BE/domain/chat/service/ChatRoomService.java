@@ -23,7 +23,7 @@ public class ChatRoomService {
     private final ObjectMapper objectMapper;
 
     @Resource(name = "redisTemplate")
-    private HashOperations<String, String, ChatRoom> hashOps;
+    private HashOperations<String, String, Object> hashOps;
 
     // 채팅방 생성 or 존재시 반환
     public ChatRoom createRoom(String sender, String receiver) {
@@ -56,4 +56,10 @@ public class ChatRoomService {
                 .map(obj -> objectMapper.convertValue(obj, ChatRoom.class))
                 .collect(Collectors.toList());
     }
+
+    // 방 업데이트 저장
+    public void saveRoom(ChatRoom room) {
+        hashOps.put(CHAT_ROOMS, room.getRoomId(), room);
+    }
+
 }

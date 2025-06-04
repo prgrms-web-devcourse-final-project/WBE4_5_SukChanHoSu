@@ -3,25 +3,24 @@ package com.NBE4_5_SukChanHoSu.BE.domain.movie.controller;
 import com.NBE4_5_SukChanHoSu.BE.domain.movie.dto.response.MovieRankingResponse;
 import com.NBE4_5_SukChanHoSu.BE.domain.movie.dto.response.MovieResponse;
 import com.NBE4_5_SukChanHoSu.BE.domain.movie.service.MovieService;
+import com.NBE4_5_SukChanHoSu.BE.domain.user.service.Ut;
 import com.NBE4_5_SukChanHoSu.BE.global.dto.RsData;
 import com.NBE4_5_SukChanHoSu.BE.global.util.DateUtils;
-import com.NBE4_5_SukChanHoSu.BE.global.util.SecurityUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("/api/movie")
 @Tag(name = "영화 데이터", description = "영화 Open API")
 public class MovieController {
 
     private final MovieService movieService;
-
-    public MovieController(MovieService movieService) {
-        this.movieService = movieService;
-    }
+    private final Ut ut;
 
     @Operation(summary = "박스오피스 조회", description = "1주일전 박스 오피스 탑텐 조회")
     @GetMapping("/weekly")
@@ -49,7 +48,7 @@ public class MovieController {
     @Operation(summary = "보고 싶은 영화 등록", description = "레디스에 저장된 영화 넘버를 이용하여 보고 싶은 영화 등록")
     @PostMapping("/bookmark")
     public RsData<MovieResponse> bookmarkMovie(@RequestParam String movieCd) {
-        Long profileId = SecurityUtil.getCurrentUser().getUserProfile().getUserId();
+        Long profileId = ut.getUserProfileByContextHolder().getUserId();
         String cachedData = movieService.bookmarkMovie(profileId,movieCd);
 
         // 영화 상세 정보

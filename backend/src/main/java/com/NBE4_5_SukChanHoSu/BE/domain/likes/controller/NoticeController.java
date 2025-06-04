@@ -1,8 +1,8 @@
 package com.NBE4_5_SukChanHoSu.BE.domain.likes.controller;
 
 import com.NBE4_5_SukChanHoSu.BE.domain.likes.service.NoticeService;
+import com.NBE4_5_SukChanHoSu.BE.domain.user.service.Ut;
 import com.NBE4_5_SukChanHoSu.BE.global.dto.RsData;
-import com.NBE4_5_SukChanHoSu.BE.global.util.SecurityUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -21,12 +21,13 @@ import java.util.Map;
 public class NoticeController {
 
     private final NoticeService noticeService;
+    private final Ut ut;
 
     // 알림 목록 조회
     @GetMapping
     @Operation(summary = "알림 목록 조회", description = "읽지 않은 알림 목록 조회")
     public RsData<List<Map<String, String>>>  getNotifications(){
-        Long userId = SecurityUtil.getCurrentUser().getId();
+        Long userId = ut.getUserProfileByContextHolder().getUserId();
         List<Map<String, String>> responses = noticeService.getNotifications(userId);
         return new RsData<>("200","알림 목록 조회", responses);
     }
@@ -35,7 +36,7 @@ public class NoticeController {
     @PostMapping("/read")
     @Operation(summary = "알림 읽음 처리", description = "읽은 알림 삭제")
     public RsData<String> markAsRead() {
-        Long userId = SecurityUtil.getCurrentUser().getId();
+        Long userId = ut.getUserProfileByContextHolder().getUserId();
         noticeService.markAsRead(userId);
         return new RsData<>("200","완료");
     }
@@ -44,7 +45,7 @@ public class NoticeController {
     @GetMapping("/count")
     @Operation(summary = "알림 갯수 조회", description = "읽지 않은 알림 갯수 조회")
     public RsData<Integer> getUnreadNotificationCount() {
-        Long userId = SecurityUtil.getCurrentUser().getId();
+        Long userId = ut.getUserProfileByContextHolder().getUserId();
         int count = noticeService.getUnreadNotificationCount(userId);
         return new RsData<>("200","미확인 알림 갯수", count);
     }

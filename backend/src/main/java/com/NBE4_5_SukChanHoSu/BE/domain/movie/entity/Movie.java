@@ -35,7 +35,8 @@ public class Movie {
     private String genresRaw; // = genres
 
     @Transient
-    private List<Genre> genres; // 로직에서 사용
+    @Builder.Default
+    private List<Genre> genres = new ArrayList<>(); // 로직에서 사용
 
     @Column(name = "movieNm", nullable = false)
     private String title; // = movieNm

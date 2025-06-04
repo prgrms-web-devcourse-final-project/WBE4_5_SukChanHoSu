@@ -5,11 +5,25 @@ server:
   tomcat:
     max-swallow-size: 1GB  # ✅ 업로드 용량 제한 가능
     max-http-form-post-size: 1GB  # ✅ POST 요청 크기 제한
-
+    max-connections: 10000  # ✅ 최대 연결 수 증가
+    connection-timeout: 60s  # ✅ 연결 제한 시간 설정
+    threads:
+      max: 1000
 spring:
   profiles:
     active: dev
     include: secret  # ✅ 추가 설정 파일 포함
+
+  datasource:
+    hikari:
+      maximum-pool-size: 50  # ✅ 데이터베이스 커넥션 풀 크기 증가
+      minimum-idle: 10
+      idle-timeout: 30000
+      max-lifetime: 1800000
+      connection-timeout: 30000
+#  data:
+#    elasticsearch:
+#      uris: ${ELASTICSEARCH.URIS}
 
 logging:
   level:
@@ -18,6 +32,7 @@ logging:
     org.hibernate.orm.jdbc.extract: TRACE
     org.springframework.transaction.interceptor: TRACE
     org.springframework.security=DEBUG:
+#    org.springframework.data.elasticsearch.core.ElasticsearchTemplate: DEBUG
 custom:
   appName: app.mm  # ✅ 앱 이름 변경 가능
   prod:

@@ -2,3 +2,16 @@
 *.iml
 
 db_dev.mv.db
+
+# Terraform state
+terraform.tfvars
+
+# Terraform working dir
+.terraform/
+
+# 잠재적 민감 정보
+secrets.tf
+infra/terraform.tfstate
+infra/terraform.tfstate.backup
+infra/scripts/user_data.sh.tpl
+

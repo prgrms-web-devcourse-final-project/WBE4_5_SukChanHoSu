@@ -1,16 +1,18 @@
 package com.NBE4_5_SukChanHoSu.BE.domain.likes.controller;
 
-import com.NBE4_5_SukChanHoSu.BE.domain.likes.dto.response.*;
+import com.NBE4_5_SukChanHoSu.BE.domain.likes.dto.response.LikeResponse;
+import com.NBE4_5_SukChanHoSu.BE.domain.likes.dto.response.MatchingResponse;
+import com.NBE4_5_SukChanHoSu.BE.domain.likes.dto.response.UserLikeResponse;
+import com.NBE4_5_SukChanHoSu.BE.domain.likes.dto.response.UserMatchingResponse;
 import com.NBE4_5_SukChanHoSu.BE.domain.likes.entity.UserLikes;
+import com.NBE4_5_SukChanHoSu.BE.domain.likes.service.UserLikeService;
+import com.NBE4_5_SukChanHoSu.BE.domain.recommend.service.CalculateDistance;
 import com.NBE4_5_SukChanHoSu.BE.domain.user.dto.response.UserProfileResponse;
 import com.NBE4_5_SukChanHoSu.BE.domain.user.entity.UserProfile;
-import com.NBE4_5_SukChanHoSu.BE.domain.likes.service.UserLikeService;
-import com.NBE4_5_SukChanHoSu.BE.domain.recommend.service.RecommendService;
-import com.NBE4_5_SukChanHoSu.BE.domain.user.service.UserProfileService;
+import com.NBE4_5_SukChanHoSu.BE.domain.user.service.Ut;
 import com.NBE4_5_SukChanHoSu.BE.global.dto.Empty;
 import com.NBE4_5_SukChanHoSu.BE.global.dto.RsData;
 import com.NBE4_5_SukChanHoSu.BE.global.exception.like.RelationNotFoundException;
-import com.NBE4_5_SukChanHoSu.BE.global.util.SecurityUtil;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.AllArgsConstructor;
@@ -25,17 +27,18 @@ import java.util.List;
 public class UserLikeController {
 
     private final UserLikeService userLikeService;
-    private final UserProfileService userProfileService;
-    private final RecommendService matchingService;
+    private final CalculateDistance calculateDistance;
+    private final Ut ut;
+
 
     @PostMapping("/like")
     @Operation(summary = "like 전송", description = "toUser에게 like 전송")
     public RsData<?> likeUser(@RequestParam Long toUserId) {
-        Long fromUserId = SecurityUtil.getCurrentUser().getUserProfile().getUserId();
+        Long fromUserId = ut.getUserProfileByContextHolder().getUserId();
 
         // 유저 탐색
-        UserProfile fromUser = matchingService.findUser(fromUserId);
-        UserProfile toUser = matchingService.findUser(toUserId);
+        UserProfile fromUser = ut.findUser(fromUserId);
+        UserProfile toUser = ut.findUser(toUserId);
 
         if(userLikeService.isSameGender(fromUser,toUser)){
             return new RsData<>("403","이성간 매칭만 허용합니다.");
@@ -59,7 +62,7 @@ public class UserLikeController {
             return new RsData<>("200", fromUser.getNickName()+"과(와)"+toUser.getNickName()+"이 매칭 되었습니다.", response);
         }
 
-        int radius = matchingService.calDistance(fromUser,toUser);
+        int radius = calculateDistance.calDistance(fromUser,toUser);
         LikeResponse likeResponse = new LikeResponse(like,toUser,radius);
         return new RsData<>("200", fromUser.getNickName()+ " 가 "+toUser.getNickName()+ "님 에게 좋아요를 보냈습니다", likeResponse);
     }
@@ -69,9 +72,8 @@ public class UserLikeController {
     public RsData<UserLikeResponse> getUserLikes(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "4") int pageSize) {
-        Long profileId = SecurityUtil.getCurrentUser().getUserProfile().getUserId();
+        UserProfile profile = ut.getUserProfileByContextHolder();
 
-        UserProfile profile = matchingService.findUser(profileId);
         List<UserProfileResponse> userProfileResponses = userLikeService.getUserLikes(profile);
 
         int totalSize = userProfileResponses.size();
@@ -96,8 +98,8 @@ public class UserLikeController {
     public RsData<UserLikeResponse> getUserLiked(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "4") int pageSize) {
-        Long profileId = SecurityUtil.getCurrentUser().getUserProfile().getUserId();
-        UserProfile profile = matchingService.findUser(profileId);
+        UserProfile profile = ut.getUserProfileByContextHolder();
+
         List<UserProfileResponse> userProfileResponses = userLikeService.getUserLiked(profile);
 
         int totalSize = userProfileResponses.size();
@@ -122,8 +124,8 @@ public class UserLikeController {
     public RsData<?> getUserMatch(
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "4") int pageSize) {
-        Long profileId = SecurityUtil.getCurrentUser().getUserProfile().getUserId();
-        UserProfile profile = matchingService.findUser(profileId);
+        UserProfile profile = ut.getUserProfileByContextHolder();
+
         List<UserProfileResponse> userProfileResponses = userLikeService.getUserMatches(profile);
 
         int totalSize = userProfileResponses.size();
@@ -146,11 +148,11 @@ public class UserLikeController {
     @DeleteMapping("/like")
     @Operation(summary = "like/matching 취소", description = "like/matching 취소")
     public RsData<?> cancelLikeUser(@RequestParam Long toUserId){
-        Long fromUserId = SecurityUtil.getCurrentUser().getUserProfile().getUserId();
+        Long fromUserId = ut.getUserProfileByContextHolder().getUserId();
 
         // 유저 탐색
-        UserProfile fromUser = matchingService.findUser(fromUserId);
-        UserProfile toUser = matchingService.findUser(toUserId);
+        UserProfile fromUser = ut.findUser(fromUserId);
+        UserProfile toUser = ut.findUser(toUserId);
 
         // 매칭 된 사용자인지 검증
         if(userLikeService.isAlreadyMatched(fromUser,toUser)){

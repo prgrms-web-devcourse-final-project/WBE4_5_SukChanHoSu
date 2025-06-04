@@ -35,12 +35,16 @@ public class SecurityConfig {
                         authorizeHttpRequests
                                 .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                                 .requestMatchers(HttpMethod.GET, "/api/movie/review/**").permitAll()
+                                .requestMatchers(HttpMethod.GET, "/api/movie/**").permitAll()
                                 .requestMatchers(
                                         "/oauth2/**",
                                         "/api/auth/login",
                                         "/api/auth/join",
                                         "/api/auth/google/url",
-                                        "/api/email/**"
+                                        "/api/email/**",
+                                        "/api/monitoring/health",
+                                        "/actuator/**",
+                                        "/api/profile/check-nickname"
                                 ).permitAll()
                                 .requestMatchers(HttpMethod.POST, "/api/profile/info").permitAll()
                                 .requestMatchers(HttpMethod.POST, "/api/profile/images").permitAll()
